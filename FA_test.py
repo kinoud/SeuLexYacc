@@ -1,4 +1,5 @@
 import FA as f
+from symbolpool import so
 
 g=f.FA()
 
@@ -8,16 +9,21 @@ for i in [0,1,3,4,5,7]:
 for i in [2,6,8]:
     g.addNode(i,{'accept':True})
 
-g.addEdge(0,1,f.eps)
-g.addEdge(1,2,f.Symbol('a'))
-g.addEdge(0,3,f.eps)
-g.addEdge(3,4,f.Symbol('a'))
-g.addEdge(4,5,f.Symbol('b'))
-g.addEdge(5,6,f.Symbol('b'))
-g.addEdge(0,7,f.eps)
-g.addEdge(7,7,f.Symbol('a'))
-g.addEdge(7,8,f.Symbol('b'))
-g.addEdge(8,8,f.Symbol('b'))
+syb={}
+syb['eps']=so.getSymbol('<eps>')
+syb['a']=so.getSymbol('a',autocreate=True)
+syb['b']=so.getSymbol('b',autocreate=True)
+
+g.addEdge(0,1,syb['eps'])
+g.addEdge(1,2,syb['a'])
+g.addEdge(0,3,syb['eps'])
+g.addEdge(3,4,syb['a'])
+g.addEdge(4,5,syb['b'])
+g.addEdge(5,6,syb['b'])
+g.addEdge(0,7,syb['eps'])
+g.addEdge(7,7,syb['a'])
+g.addEdge(7,8,syb['b'])
+g.addEdge(8,8,syb['b'])
 
 g.info['start']=0
 

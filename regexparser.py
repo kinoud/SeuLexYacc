@@ -1,14 +1,16 @@
 import LALR as lr
-from LALR import Symbol
-from LALR import eps,eos
+from symbolpool import so
 from collections import deque
 from nltk.tree import Tree
 from nltk.draw.tree import draw_trees
+
+
 
 """
 # using sample
 
 import regexparser as rx
+
 rx.build()
 rx.clear()
 rx.pushseq(list('(a|bc)*'))
@@ -31,8 +33,12 @@ def build():
         all escape be processed, that is, <slash>x is one token, not two
 
     """
+    global eps,eos
+    eps = so.getSymbol('<eps>')
+    eos = so.getSymbol('<eos>')
+
     lr.init()
-    lr.adp('`S',            ['`regex'])
+    lr.adp('`<start>',            ['`regex'])
     lr.adp('`regex',        ['`term'])
     lr.adp('`regex',        ['`term','|','`regex'])
     lr.adp('`term',         ['`factor'])
@@ -55,7 +61,7 @@ def build():
     for c in '?*+^$': 
         lr.adp('`metachar', [c])
 
-    lr.adp_done('`S')
+    lr.adp_done('`<start>')
 
     lr.build()
 
@@ -95,7 +101,7 @@ def pushseq(seq):
         pushsyb(s)
 
 def pushsyb(s,raw=True):
-    if raw:s=Symbol(s)
+    if raw:s=so.getSymbol(s,autocreate=True)
     if not is_a_terminal(s):
         print('%s is not a terminal')
         return

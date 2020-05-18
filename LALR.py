@@ -1,4 +1,5 @@
 import copy
+from symbolpool import so
 
 class Production:
     """
@@ -59,26 +60,6 @@ class Item:
             ans+=' '+str(syb)
         return ans
 
-class Symbol:
-    def __init__(self,uniqueID,terminal=True):
-        """
-        uniqueID: any type is ok but its value should be unique
-        """
-        self.uniqueID=uniqueID
-        self.terminal=terminal
-    
-    def isTerminal(self):
-        return self.terminal
-    
-    def __hash__(self):
-        return hash((self.uniqueID,self.terminal))
-    
-    def __eq__(self,other):
-        return self.uniqueID==other.uniqueID and self.terminal==other.terminal
-
-    def __str__(self):
-        return str(self.uniqueID)
-
 class StateWrapper:
     def __init__(self,ID):
         self.ID=ID
@@ -114,19 +95,21 @@ class StateWrapper:
             ans+='(%d) '%i
             ans+=str(getItemByID(i))
 
-            # ans+='\n\t\t\tLA: '
-            # for x in getLookAhead(i):
-            #     ans+=str(x)
+            ans+='\n\t\t\tLA: '
+            for x in getLookAhead(i):
+                ans+=str(x)
             ans+='\n'
         return ans
 
-eps=Symbol('<eps>') # epsilon (null char)
-eos=Symbol('<eos>') # end of stream (end of input)
 
 def init():
     """
     initialize all global variables
     """
+    global eps,eos
+    eps = so.getSymbol('<eps>')
+    eos = so.getSymbol('<eos>')
+
     global Sp,all_symbols,all_transymbols
     Sp=None # the start symbol (S'-->S)
     all_symbols=set([eps,eos]) # all symbols include <eps> <eos> S'
@@ -208,8 +191,7 @@ def CLOSURE(I):
     close I inplace
     I: set<int> set of item IDs
     """
-    global eps
-    mark=Symbol('<mark>') # mark must not be in the language
+    mark=so.getSymbol('<mark>',autocreate=True) # mark must not be in the language
     while True:
         dI=[]
         for i in I:
@@ -254,8 +236,7 @@ def GOTO(I,X):
     for i in I:
         item=getItemByID(i)
         if not item.isEnd() and item[item.dot]==X:
-            xitem=copy.deepcopy(item)
-            xitem.dot+=1
+            xitem=Item(item.p,item.dot+1)
             addPropagation(getItemID(item),getItemID(xitem))
             J.add(getItemID(xitem))
     return CLOSURE(J)
@@ -353,17 +334,18 @@ def adp(lhs,rhs):
     rhs:list[str]
     """
     test=lambda s: s[0]=='`'
-    lhs=Symbol(lhs[1:],False) if test(lhs) else Symbol(lhs)
-    rhs=[Symbol(s[1:],False) if test(s) else Symbol(s) for s in rhs]
+    assert test(lhs)==True,'error: lhs should be non-terminal'
+    lhs=so.getSymbol(lhs[1:],terminal=False,autocreate=True)
+    rhs=[so.getSymbol(s[1:],False,True) if test(s) else so.getSymbol(s,True,True) for s in rhs]
     addProduction(lhs,rhs)
 
 def adp_done(start):
-    global Sp,all_symbols,all_transymbols
-    Sp=Symbol(start[1:],False)
-    all_transymbols=copy.deepcopy(all_symbols)
-    all_transymbols.remove(eps)
-    all_transymbols.remove(Sp)
-    all_transymbols.remove(eos)
+    global Sp,all_symbols
+    Sp=so.getSymbol(start[1:],False)
+    all_transymbols.clear()
+    for syb in all_symbols:
+        if syb not in [eps,Sp,eos]:
+            all_transymbols.add(syb)
 
 def addTrans(u,x,v):
     """

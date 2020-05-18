@@ -1,11 +1,10 @@
-from LALR import Symbol
-from LALR import eps
+from symbolpool import so
 from collections import deque
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+eps=so.getSymbol('<eps>')
 
 class FA:
 
