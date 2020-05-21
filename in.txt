@@ -1,0 +1,6 @@
+hello world
+3.1415926   0.00314e3
+-1          -9e-9
+if a > b then b < a
+else a<=b
+good bye

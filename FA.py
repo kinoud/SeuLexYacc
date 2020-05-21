@@ -1,20 +1,32 @@
 from symbolpool import so
 from collections import deque
-import networkx as nx
-import numpy as np
-import matplotlib.pyplot as plt
 
 eps=so.getSymbol('<eps>')
 
 class FA:
 
     def __init__(self):
+        
         self.edge={} # dict[int]->(dict[Symbol]->set<int>)
-        self._info_node={} # dict[int]->(dict[str]->any)
-        self.info={} # dict[str]->any
+        self._info_node={} # dict[int]->(dict[str]->str/int)
+        self.special_node={} # dict[str]->int
         self.nodes=set() # set<int>
     
-    def addNode(self,id,nodeinfo=None):
+    def copy(self):
+        """
+        returns: FA
+        """
+        ans=FA()
+        for i in self:
+            ans.addNode(i,nodeinfo=self.getNodeInfo(i).copy())
+
+        for i,j,x in self.edges():
+            ans.addEdge(i,j,x)
+        
+        ans.special_node=self.special_node.copy()
+        return ans
+
+    def addNode(self,id,nodeinfo={}):
         """
         id: int
         nodeinfo: dict[str]->any
@@ -65,6 +77,12 @@ class FA:
         returns: dict[Symbol]->set<int> (in DFA len(set<int>) = 1 or 0)
         """
         return self.edge.get(u)
+
+    def edges(self):
+        for i in self:
+            for x,j_set in self.edge[i].items():
+                for j in j_set:
+                    yield (i,j,x)
 
     def getAllSymbols(self):
         """
@@ -122,32 +140,142 @@ class FA:
     def __len__(self):
         return len(self.nodes)
 
-def draw(fa:FA):
-    G = nx.DiGraph(directed=True)
+def merge(nfa_list):
+    """
+    new special_node={}
+    *nfa: FA(s)
+    returns: FA,[id_map1,id_map2,...,id_mapx]
+    """
+    id_map=[]
+    ans=FA()
+    def addnodeedge(fa,id_map,base):
+        for i in fa:
+            ans.addNode(base,fa.getNodeInfo(i).copy())
+            id_map[i]=base
+            base+=1
+        for i,j,x in fa.edges():
+            ans.addEdge(id_map[i],id_map[j],x)
+    base=0
+    for i,g in enumerate(nfa_list):
+        id_map.append({})
+        addnodeedge(g,id_map[i],base)
+        base+=len(g)
 
-    for i in fa:
-        G.add_node(i)
+    return ans,id_map
 
-    edge_labels={}
-    for i in fa:
-        for syb,j_set in fa.getEdge(i).items():
-            for j in j_set:
-                print('add %d->%d'%(i,j))
-                if i==j:
-                    u='cc%d:%s'%(i,str(syb))
-                    G.add_edge(i,u)
-                    G.add_edge(u,i)
-                    continue
-                G.add_edge(i,j)
-                edge_labels[(i,j)]=str(syb)
-    pos = nx.spring_layout(G)
+def nfa_or(g:FA,h:FA):
+    """
+    ans = (g|h)
+    g h special_node must have entry 'start' and 'to'
+    returns: FA
+    """
+    ans,[idm,idm2]=merge([g,h])
+    s1=idm[g.special_node['start']]
+    t1=idm[g.special_node['to']]
+    s2=idm2[h.special_node['start']]
+    t2=idm2[h.special_node['to']]
 
-    nx.draw_networkx_edge_labels(G,pos,edge_labels=edge_labels)
-    nx.draw(G,pos,with_labels=True,font_size=20,node_color='lightblue',arrowsize=20, node_size=1500)
-    plt.show()
+    ans.addEdge(s1,s2,eps)
+    ans.addEdge(t2,t1,eps)
+
+    ans.special_node['start']=s1
+    ans.special_node['to']=t1
+    
+    return ans
+
+def nfa_link(g:FA,h:FA):
+    """
+    ans = gh
+    g h special_node must have entry 'start' and 'to'
+    returns: FA
+    """
+    ans,[idm,idm2]=merge([g,h])
+    s1=idm[g.special_node['start']]
+    t1=idm[g.special_node['to']]
+    s2=idm2[h.special_node['start']]
+    t2=idm2[h.special_node['to']]
+
+    ans.addEdge(t1,s2,eps)
+
+    ans.special_node['start']=s1
+    ans.special_node['to']=t2
+    
+    return ans
+
+def nfa_oneormore(g:FA):
+    """
+    ans = g+
+    g special_node must have entry 'start' and 'to'
+    returns: FA
+    """
+    ans=g.copy()
+    eps=so.getSymbol('<eps>')
+    s=ans.special_node['start']
+    t=ans.special_node['to']
+    ans.addEdge(t,s,eps)
+    return ans
+
+def nfa_oneornot(g:FA):
+    """
+    ans = g?
+    g special_node must have entry 'start' and 'to'
+    returns: FA
+    """
+    ans=g.copy()
+    s=ans.special_node['start']
+    t=ans.special_node['to']
+    ans.addEdge(s,t,eps)
+    return ans
+
+def nfa_star(g:FA):
+    """
+    ans = g*
+    g special_node must have entry 'start' and 'to'
+    returns: FA
+    """
+    ans=g.copy()
+    s=ans.special_node['start']
+    t=ans.special_node['to']
+    
+    ans.addEdge(s,t,eps)
+    ans.addEdge(t,s,eps)
+    return ans
+
+def draw_mermaid(g:FA):
+    """
+    returns: str, graph discription in mermaid format
+    """
+    ans='graph TD\n'
+    left= ['((','>','[']
+    right=['))',']',']']
+    for i in g:
+        t=0
+        if i==g.special_node.get('start'):
+            t=1
+        elif i==g.special_node.get('to'):
+            t=2
+        elif g.getNodeInfo(i).get('accept')==True:
+            t=2
+        note=''
+        if g.getNodeInfo(i).get('rule') is not None:
+            note='('+str(g.getNodeInfo(i).get('rule'))+')'
+        ans+=str(i)+left[t]+'"'+str(i)+note+'"'+right[t]+'\n'
+    
+    edge={}
+    for i,j,x in g.edges():
+        if edge.get((i,j)) is not None:
+            edge[(i,j)]+='|'+str(x)
+        else:
+            edge[(i,j)]=str(x)
+    for (i,j),s in edge.items():
+        if s=='<eps>':
+            s='eps'
+        ans+=str(i)+'--"'+s+'"-->'+str(j)+'\n'      
+    return ans
 
 def get_dfa_from_nfa(nfa:FA,fn_info_node=lambda x:None):
     """
+    nfa.special_node must have 'start' entry
     nfa: FA
     fn_...: lambda list<dict[str]->any>:(dict[str]->any)
     returns: FA
@@ -155,7 +283,7 @@ def get_dfa_from_nfa(nfa:FA,fn_info_node=lambda x:None):
 
     all_symbols=nfa.getAllSymbols()
     
-    s0=nfa.info['start'] # int
+    s0=nfa.special_node['start'] # int
     D0=nfa.closure([s0]) # frozenset<int>
     q=deque([D0])
 
@@ -200,15 +328,17 @@ def get_dfa_from_nfa(nfa:FA,fn_info_node=lambda x:None):
         dfa.addNode(u,fn_info_node(mem_info))
         
     for T in D_states:
-        for syb,U in trans[T].items():
-            dfa.addEdge(D_id[T],D_id[U],syb)
+        if trans.get(T) is not None:
+            for syb,U in trans[T].items():
+                dfa.addEdge(D_id[T],D_id[U],syb)
         if T is D0:
-            dfa.info['start']=D_id[T]
+            dfa.special_node['start']=D_id[T]
 
     return dfa
 
 def minimized_dfa(dfa:FA,fn_partition_id,fn_info_node):
     """
+    dfa.info must have 'start' entry
     dfa: FA
     fn_...: lambda int:int, 
         initial partition function,
@@ -266,7 +396,7 @@ def minimized_dfa(dfa:FA,fn_partition_id,fn_info_node):
         for syb,j in edges.items():
             ans.addEdge(i,j,syb)
         
-    s0=dfa.info['start']
-    ans.info['start']=partition[s0]
+    s0=dfa.special_node['start']
+    ans.special_node['start']=partition[s0]
     
     return ans

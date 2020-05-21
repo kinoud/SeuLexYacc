@@ -191,7 +191,7 @@ def CLOSURE(I):
     close I inplace
     I: set<int> set of item IDs
     """
-    mark=so.getSymbol('<mark>',autocreate=True) # mark must not be in the language
+    mark=so.getSymbol('<mark>',autocreate=True,lexyyc_id=-1) # mark must not be in the language
     while True:
         dI=[]
         for i in I:
@@ -325,6 +325,7 @@ def addProduction(lhs,rhs):
     if productions_of.get(lhs)==None:
         productions_of[lhs]=[]
     productions_of[lhs].append(p)
+    return pid
 
 def adp(lhs,rhs):
     """
@@ -337,7 +338,7 @@ def adp(lhs,rhs):
     assert test(lhs)==True,'error: lhs should be non-terminal'
     lhs=so.getSymbol(lhs[1:],terminal=False,autocreate=True)
     rhs=[so.getSymbol(s[1:],False,True) if test(s) else so.getSymbol(s,True,True) for s in rhs]
-    addProduction(lhs,rhs)
+    return addProduction(lhs,rhs)
 
 def adp_done(start):
     global Sp,all_symbols
