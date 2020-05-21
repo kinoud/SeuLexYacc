@@ -26,7 +26,7 @@ class FA:
         ans.special_node=self.special_node.copy()
         return ans
 
-    def addNode(self,id,nodeinfo={}):
+    def addNode(self,id,nodeinfo=None):
         """
         id: int
         nodeinfo: dict[str]->any
@@ -35,7 +35,10 @@ class FA:
         assert id not in self.nodes,'error: node already exists'
         self.nodes.add(id)
         self.edge[id]={}
-        self._info_node[id]=nodeinfo
+        if nodeinfo is None:
+            self._info_node[id]={}
+        else:
+            self._info_node[id]=nodeinfo.copy()
 
     def getNodeInfo(self,id):
         """
@@ -43,6 +46,11 @@ class FA:
         returns: dict[str]->any
         """
         return self._info_node.get(id)
+    
+    def setNodeInfo(self,id,params:dict):
+        for k,v in params.items():
+            self._info_node[id][k]=v
+
 
     def nodesBy(self,idu,syb):
         """

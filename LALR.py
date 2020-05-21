@@ -191,7 +191,7 @@ def CLOSURE(I):
     close I inplace
     I: set<int> set of item IDs
     """
-    mark=so.getSymbol('<mark>',autocreate=True,lexyyc_id=-1) # mark must not be in the language
+    mark=so.getSymbol('<mark>',autocreate=True) # mark must not be in the language
     while True:
         dI=[]
         for i in I:
@@ -387,7 +387,9 @@ def setGrammer():
     adp_done('`Sp`')
 
 def build():
+    print('LALR: buidling...')
     # setGrammer()
+    print('LALR: cal FIRST...')
     FIRST_INIT()
 
     id0 = getItemID(Item(productions_of[Sp][0],0))
@@ -396,8 +398,10 @@ def build():
     I0=frozenset(CLOSURE(I0))
     addState(I0)
 
+    print('LALR: generating states...')
     dfs(I0)
 
+    print('LALR: generating lookaheads...')
     count=0
     while True:
         count+=1
@@ -407,7 +411,7 @@ def build():
                 if addLookAhead(v,lookahead[u]):
                     f=True
         if not f:break
-    print('LALR: propagate x%d '%count)
+    print('LALR: lookahead propagate x%d '%count)
 
     for i in ID2state.keys():
         state_wrappers[i]=StateWrapper(i)

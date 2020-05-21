@@ -12,6 +12,10 @@ not support (including but not limited to):
 2. /*...*/ in non-C-code part
 3. A/B (match A with B behind it)
 
+bugs:
+1. '{' or '}' should not appear in lex action part, 
+    why is that? you can check the code of LexReader.readBlock()
+
 """
 
 def init():
@@ -240,9 +244,7 @@ class LexProcessor:
             pass
         # rx.draw()
         nfa=rx.get_final_nfa()
-        info=nfa.getNodeInfo(nfa.special_node['to'])
-        info['accept']=True
-        info['rule']=rule_id
+        nfa.setNodeInfo(nfa.special_node['to'],{'accept':True,'rule':rule_id})
         self.nfa_of_rule[rule_id]=nfa
         print(fam.draw_mermaid(nfa))
         print()
@@ -367,7 +369,7 @@ class LexProcessor:
 
 if __name__=='__main__':
     init()
-    reader=LexReader('test.l')
+    reader=LexReader('modified_c99.l')
     writer=LexWriter('lexyyframe.c','lex.yy.c')
     lp=LexProcessor(reader,writer)
     while lp.step():

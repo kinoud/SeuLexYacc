@@ -67,9 +67,9 @@ should not overlap
 # operator, need escape
 _regex_metachar='+*?'
 # need escape
-_regex_specialchar='.^$[]()\\'
+_regex_specialchar='.^$[]()\\|{}'
 # not need escape
-_regex_normalchar='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"\'- =<>'
+_regex_normalchar='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"\'- =<>%&/!;,:~#'
 
 def dot_chars_but(sybset):
     """
