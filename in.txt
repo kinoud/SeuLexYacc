@@ -4,3 +4,9 @@ hello world
 if a > b then b < a
 else a<=b
 good bye
+
+while(hello<hi){
+    printf("%s",p);
+    if(a>=b)
+        break;
+}
