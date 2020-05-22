@@ -1,5 +1,6 @@
 import copy
 from symbolpool import so
+from symbolpool import Symbol
 
 class Production:
     """
@@ -21,18 +22,15 @@ class Production:
 
     def __len__(self):
         return len(self.rhs)
-
-    def __hash__(self):
-        return hash((self.lhs,tuple(self.rhs)))
-
-    def __eq__(self,other):
-        return self.lhs==other.lhs and self.rhs==other.rhs
     
     def __str__(self):
         ans=str(self.lhs)+' --> '
         for s in self.rhs:
             ans+=' '+str(s)
         return ans
+    
+    def __repr__(self):
+        return str(self)
 
 class Item:
     def __init__(self,p,dot):
@@ -45,12 +43,6 @@ class Item:
     def isEnd(self):
         return self.dot>=len(self.p)
     
-    def __hash__(self):
-        return hash((self.p,self.dot))
-    
-    def __eq__(self,other):
-        return self.p==other.p and self.dot==other.dot
-    
     def __str__(self):
         ans=str(self.p.lhs)+' -->'
         for syb in self.p[0:self.dot]:
@@ -59,89 +51,209 @@ class Item:
         for syb in self.p[self.dot:]:
             ans+=' '+str(syb)
         return ans
-
-class StateWrapper:
-    def __init__(self,ID):
-        self.ID=ID
-        self.reduceinfo={}
-        self.shiftinfo={}
-        state=ID2state[ID]
-        for i in state:
-            item=getItemByID(i)
-            for x in getLookAhead(i):
-                if item.isEnd():
-                    self.reduceinfo[x]={'prod_id':prod2ID[item.p],'reduce_len':len(item.p),'reduce_to':item.p.lhs}
-        if trans.get(ID)!=None:
-            self.shiftinfo=trans[ID]
     
-    def getReduceInfo(self,x):
+    def __repr__(self):
+        return str(self)
+
+
+class ItemPool:
+    def __init__(self):
+        self._items={}
+    def getItem(self,p:Production,dot:int,autocreate=True):
         """
-        x: Symbol, lookahead
-        returns: None or 
-        {'prod_id':int,'reduce_len':int,'reduce_to':Symbol}
+        dot: dot position (numbered from 0)
+        :rtype:Item
+        """
+        if self._items.get((p,dot)) is None:
+            self._items[(p,dot)]=Item(p,dot)
+        return self._items[(p,dot)]
+
+ipool=ItemPool()
+
+class ProductionPool:
+
+    def __init__(self):
+        self._prods_of={}
+        self._productions=[]
+
+    def add(self,p:Production):
+        # TODO: check if p is unique
+        self._productions.append(p)
+        if self._prods_of.get(p.lhs) is None:
+            self._prods_of[p.lhs]=[]
+        self._prods_of[p.lhs].append(p)
+    
+    def getProdsOf(self,L:Symbol):
+        assert not L.isTerminal(),'L must be non-terminal'
+        return self._prods_of[L]
+
+    def __iter__(self):
+        return iter(self._productions)
+
+    def __len__(self):
+        return len(self._productions)
+ppool=ProductionPool()
+
+class State:
+    def __init__(self):
+        self._items=set()
+        self._edges={}
+        self.id=None
+        self.reduceinfo={}
+
+    def edges(self):
+        for x,J in self._edges.items():
+            yield (x,J)
+
+    def clear(self):
+        self._items.clear()
+        self._edges.clear()
+        self.reduceinfo.clear()
+
+    def update(self,D):
+        self._items.update(D)
+    
+    def add(self,item):
+        self._items.add(item)
+
+    def addEdge(self,x:Symbol,V):
+        assert self._edges.get(x) is None
+        self._edges[x]=V
+    
+    def getToBy(self,x:Symbol):
+        """
+        :rtype: State or None
+        """
+        return self._edges.get(x)
+
+    def genReduceInfo(self):
+        self.reduceinfo={}
+        for item in self:
+            for x in la.getLookaheads(self,item):
+                if item.isEnd():
+                    self.reduceinfo[x]={'p':item.p,'reduce_len':len(item.p),'reduce_to':item.p.lhs}
+
+
+
+
+    def getReduceInfo(self,x:Symbol):
+        """
+        :rtype: dict or None
         """
         return self.reduceinfo.get(x)
 
-    def getShiftInfo(self,x):
-        """
-        x: Symbol, lookahead
-        returns: None or int, target state id
-        """
-        return self.shiftinfo.get(x)
+    def __iter__(self):
+        return iter(self._items)
+
+    def __len__(self):
+        return len(self._items)
 
     def __str__(self):
-        ans='I%d:\n'%self.ID
-        for i in ID2state[self.ID]:
-            ans+='(%d) '%i
-            ans+=str(getItemByID(i))
+        ans='I%d:\n'%self.id
+        for item in self:
+            ans+=str(item)
 
             ans+='\n\t\t\tLA: '
-            for x in getLookAhead(i):
+            for x in la.getLookaheads(self,item):
                 ans+=str(x)
             ans+='\n'
         return ans
 
+class LookaheadKeeper:
+
+    def __init__(self):
+        self.lookaheads={} # dict[State]->(dict[Item]->set<Symbol>)
+        self._prop=set()
+
+    def getLookaheads(self,I:State,item:Item):
+        """
+        :rtype: set
+        """
+        lk=self.lookaheads
+        if lk.get(I) is None:
+            lk[I]={}
+        if lk[I].get(item) is None:
+            lk[I][item]=set()
+        return lk[I][item]
+
+    def addLookaheads(self,I:State,item:Item,LAs):
+        if LAs is None or len(LAs)==0:
+            return False
+
+        lk=self.lookaheads
+        if lk.get(I) is None:
+            lk[I]={}
+        if lk[I].get(item) is None:
+            lk[I][item]=set()
+
+        sz=len(lk[I][item])
+        lk[I][item].update(LAs)
+        return sz != len(lk[I][item])
+
+    def addPropagation(self,I:State,i:Item,J:State,j:Item):
+        self._prop.add((I,i,J,j))
+
+    def initLookaheads(self):
+        mark=so.getSymbol('<mark>',autocreate=True)
+        for I in ID2state.values():
+            for it in I:
+                if it != it0 and it.dot==0:continue
+                T=State()
+                T.add(it)
+                h={it:[mark]}
+                CLOSURE_LR1(T,h)
+                for t in T:
+                    if t.isEnd():continue
+                    x=t[t.dot]
+                    xI=I.getToBy(x)
+                    xt=ipool.getItem(t.p,t.dot+1)
+                    if mark in h[t]:
+                        self.addPropagation(I,it,xI,xt)
+                        h[t].remove(mark)
+                    if len(h[t])>0:
+                        self.addLookaheads(xI,xt,h[t])
+        self.addLookaheads(I0,it0,[eos])
+
+
+    def propagateLookaheads(self):
+        count=0
+        while True:
+            count+=1
+            f=False
+            for I,i,J,j in self._prop:
+                if self.addLookaheads(J,j,self.getLookaheads(I,i)):
+                    f=True
+            if not f:break
+
+        lk=self.lookaheads
+        for I in ID2state.values():
+            if lk.get(I) is None:
+                lk[I]={}
+            CLOSURE_LR1(I,lk[I])
+        return count
+
+la=LookaheadKeeper()
+
+eps = so.getSymbol('<eps>')
+eos = so.getSymbol('<eos>')
+Sp=None # the start symbol (S'-->S)
+all_symbols=set([eps,eos]) # all symbols include <eps> <eos> S'
+all_transymbols=set() # all symbols that cause transitions (all symbols but <eps> <eos> and S')
+fi={} # dict[Symbol]->set<Symbol>
+ID2state={} # dict[int]->State
 
 def init():
-    """
-    initialize all global variables
-    """
-    global eps,eos
-    eps = so.getSymbol('<eps>')
-    eos = so.getSymbol('<eos>')
-
-    global Sp,all_symbols,all_transymbols
-    Sp=None # the start symbol (S'-->S)
-    all_symbols=set([eps,eos]) # all symbols include <eps> <eos> S'
-    all_transymbols=set() # all symbols that cause transitions (all symbols but <eps> <eos> and S')
-    global prod2ID,ID2prod,productions_of,fi
-    prod2ID={} # dict[Production]->int
-    ID2prod={} # dict[int]->Production
-    productions_of={} # dict[Symbol]->list[Productions]
-    fi={} # dict[Symbol]->set<Symbol>
-    global lookahead,item2ID,ID2item,prop,state2ID,ID2state,trans,state_wrappers
-    lookahead={} # dict[int]->set<Symbol>
-    item2ID={} # dict[item]->int
-    ID2item={} # dict[int]->item
-    prop={} # dict[int]->set(int) item id -> item ids, directed edges of LA propagation
-    state2ID={} # dict[frozenset<int>]->int
-    ID2state={} # dict[int]->frozenset<int>
-    trans={} # dict[int]->(dict[Symbol]->int), transition from state to state
-    state_wrappers={} # dict[int]->StateWrapper, all LALR states
-
-def getProduction(i):
-    """
-    i: int, production id
-    """
-    return ID2prod[i]
+    pass
 
 def getReduceInfo(i,x):
     """
     i: int, state id
     x: Symbol, lookahead
-    returns: None or {'prod_id':int,'reduce_len':int,'reduce_to':Symbol}
+    returns: None or {'p':Production,'reduce_len':int,'reduce_to':Symbol}
     """
-    return state_wrappers[i].getReduceInfo(x)
+    U=ID2state.get(i)
+    assert U is not None
+    return U.getReduceInfo(x)
 
 def getShiftInfo(i,x):
     """
@@ -149,97 +261,77 @@ def getShiftInfo(i,x):
     x: Symbol, lookahead
     returns: None or int, target state id
     """
-    return state_wrappers[i].getShiftInfo(x)
+    U=ID2state.get(i)
+    assert U is not None
+    V=U.getToBy(x)
+    if V is None:
+        return None
+    return V.id
 
-def getItemID(it):
-    global item2ID,ID2item
-    if item2ID.get(it)==None:
-        x=item2ID[it]=len(item2ID)+1
-        ID2item[x]=it
-    return item2ID[it]
+def CLOSURE_LR1(I:State,h:dict):
+    while True:
+        change=False
+        dI=[]
+        for item in I:
+            if item.isEnd():continue 
+            B=item[item.dot]
+            if B.isTerminal():continue 
+            beta=item[item.dot+1:]
+            if h.get(item) is None:
+                h[item]=set()
+            fb=FIRST(beta)
+            if eps in fb:
+                fb.remove(eps)
+                fb.update(h[item])
+            for p in ppool.getProdsOf(B):
+                pitem=ipool.getItem(p,0)
+                dI.append(pitem)
+                if h.get(pitem) is None:
+                    h[pitem]=set()
+                sz=len(h[pitem])
+                h[pitem].update(fb)
+                if sz!=len(h[pitem]):change=True
+        
+        sz=len(I)
+        I.update(dI)
+        if sz!=len(I):change=True
+        if not change:break
+    
+    return I,h
 
-def getItemByID(id):
-    return ID2item[id]
 
-def addPropagation(id1,id2):
-    global prop
-    if prop.get(id1)==None:
-        prop[id1]=set()
-    prop[id1].add(id2)
-
-def addLookAhead(id,symbolset):
+def CLOSURE_LR0(I:State):
     """
-    id: int
-    symbolset: set(Symbol) or list[Symbol]
+    I: State
     """
-    global lookahead
-    if lookahead.get(id)==None:
-        lookahead[id]=set()
-    sz=len(lookahead[id])
-    lookahead[id].update(symbolset)
-    return sz!=len(lookahead[id])
-
-def getLookAhead(id):
-    """
-    id: int,item id
-    returns: set<Symbol>
-    """
-    return lookahead[id]
-
-def CLOSURE(I):
-    """
-    close I inplace
-    I: set<int> set of item IDs
-    """
-    mark=so.getSymbol('<mark>',autocreate=True) # mark must not be in the language
     while True:
         dI=[]
-        for i in I:
-            item=getItemByID(i)
+        for item in I:
             if item.isEnd():continue
             B=item[item.dot]
             if B.isTerminal():continue
 
-            beta=item[item.dot+1:]
-            fb=FIRST(beta+[mark])
-            if eps in fb:fb.remove(eps)
-            markin=False
-            if mark in fb:
-                markin=True
-                fb.remove(mark)
-
-            for p in productions_of[B]:
-                x=getItemID(Item(p,0))
-                dI.append(x)
-                addLookAhead(x,fb)
-                if markin:
-                    addPropagation(i,x)
-
-            # a=item.LA
-
-            # for b in FIRST(beta+[a]):
-            #    for p in productions_of[B]:
-            #        dI.append(Item(p,0,b))
+            for p in ppool.getProdsOf(B):
+                xitem=ipool.getItem(p,0)
+                dI.append(xitem)
+        
         sz=len(I)
         I.update(dI)
         if sz==len(I):break
-        
     return I
 
 def GOTO(I,X):
     """
-    I: set<int> set of item IDs
+    I: State
     X: Symbol
-    returns: set<int>
+    returns: State
     """
-    J=set()
-    for i in I:
-        item=getItemByID(i)
+    J=State()
+    for item in I:
         if not item.isEnd() and item[item.dot]==X:
-            xitem=Item(item.p,item.dot+1)
-            addPropagation(getItemID(item),getItemID(xitem))
-            J.add(getItemID(xitem))
-    return CLOSURE(J)
+            xitem=ipool.getItem(item.p,item.dot+1)
+            J.add(xitem)
+    return CLOSURE_LR0(J)
 
 def FIRST(L):
     """
@@ -249,6 +341,7 @@ def FIRST(L):
     """
     global fi,eps
     R=set()
+    eps_appear=False
     for x in L:
         eps_appear=False
         if not x.isTerminal():
@@ -280,7 +373,7 @@ def FIRST_INIT():
 
     while True:
         change=False
-        for p in ID2prod.values(): # all productions
+        for p in ppool: # all productions
             L=p.lhs # Symbol
             if len(p)==0 and eps not in fi[L]:
                 fi[L].add(eps)
@@ -318,14 +411,9 @@ def addProduction(lhs,rhs):
         all_symbols.add(s)
     p=Production(lhs,rhs)
 
-    pid=len(ID2prod)
-    ID2prod[pid]=p
-    prod2ID[p]=pid
+    ppool.add(p)
 
-    if productions_of.get(lhs)==None:
-        productions_of[lhs]=[]
-    productions_of[lhs].append(p)
-    return pid
+    return p
 
 def adp(lhs,rhs):
     """
@@ -348,73 +436,48 @@ def adp_done(start):
         if syb not in [eps,Sp,eos]:
             all_transymbols.add(syb)
 
-def addTrans(u,x,v):
-    """
-    u: int, state id
-    x: Symbol
-    v: int, state id
-    """
-    if trans.get(u)==None:
-        trans[u]={}
-    trans[u][x]=v
+frozen2state={}
 
-def addState(I):
-    """
-    I: frozenset<int>
-    """
-    x=state2ID[I]=len(state2ID)
-    ID2state[x]=I
-
-def dfs(I):
-    """
-    I: frozenset(int) set of item IDs
-    """
+def dfs(I:State):
+    frozen2state[frozenset(I)] = I
+    id=len(ID2state)
+    ID2state[id]=I
+    I.id=id
     for x in all_transymbols:
-        J=frozenset(GOTO(I,x))
+        J=GOTO(I,x)
         if len(J)==0:continue
-        flag = state2ID.get(J)==None
-        if flag:
-            addState(J)
-        addTrans(state2ID[I],x,state2ID[J])
-        if flag:
+        frozenJ=frozenset(J)
+        new_state=(frozen2state.get(frozenJ) is None)
+        if new_state:
+            I.addEdge(x,J)
             dfs(J)
-
-def setGrammer():
-    adp('`Sp`',['`S`'])
-    adp('`S`',['`C`','`C`'])
-    adp('`C`',['c','`C`'])
-    adp('`C`',['d'])
-    adp_done('`Sp`')
-
+        else:
+            I.addEdge(x,frozen2state.get(frozenJ))
+            
 def build():
-    print('LALR: buidling...')
-    # setGrammer()
     print('LALR: cal FIRST...')
     FIRST_INIT()
 
-    id0 = getItemID(Item(productions_of[Sp][0],0))
-    addLookAhead(id0,[eos])
-    I0=set([id0])
-    I0=frozenset(CLOSURE(I0))
-    addState(I0)
+    global it0,I0
+    it0=ipool.getItem(ppool.getProdsOf(Sp)[0],0)
+    I0=State()
+    I0.add(it0)
+    I0=CLOSURE_LR0(I0)
 
-    print('LALR: generating states...')
+    print('LALR: generating LR0 states...')
     dfs(I0)
 
-    print('LALR: generating lookaheads...')
-    count=0
-    while True:
-        count+=1
-        f=False
-        for u,vs in prop.items():
-            for v in vs:
-                if addLookAhead(v,lookahead[u]):
-                    f=True
-        if not f:break
+    print('LALR: generating LALR states...')
+    
+    la.initLookaheads()
+    count=la.propagateLookaheads()
+
     print('LALR: lookahead propagate x%d '%count)
 
-    for i in ID2state.keys():
-        state_wrappers[i]=StateWrapper(i)
+    all_items=0
+    for I in ID2state.values():
+        I.genReduceInfo()
+        all_items+=len(I)
+
     print('LALR: %d states, %d items, %d productions'%(
-        len(state_wrappers),len(ID2item),len(ID2prod)))
-    
+        len(ID2state),all_items,len(ppool)))

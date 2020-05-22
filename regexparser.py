@@ -43,11 +43,11 @@ def REGISTER_ACTION(i):
         _registerd_actions[i]=x
     return regi
 
-def bind_action(production_id:int,action_id:int):
-    _prod_actions[production_id]=_registerd_actions[action_id]
+def bind_action(p,action_id:int):
+    _prod_actions[p]=_registerd_actions[action_id]
 
-def get_action_of_prod(production_id):
-    return _prod_actions[production_id]
+def get_action_of_prod(p):
+    return _prod_actions[p]
 
 def get_char_range(syba,sybb):
     """
@@ -350,7 +350,7 @@ def step():
     if sinfo!=None and rinfo!=None:
         print('warning: a shift-reduce conflict happened')
         print('reduce: ',end='')
-        print(lr.getProduction(rinfo['prod_id']))
+        print(rinfo['p'])
         print('shift: %s'%str(syb))
 
     if sinfo!=None:
@@ -359,7 +359,7 @@ def step():
         state_stack.append(sinfo)
         cur=sinfo
     elif rinfo!=None:
-        prod_id = rinfo['prod_id']
+        p = rinfo['p']
         reduce_len = rinfo['reduce_len']
         reduce_to = rinfo['reduce_to']
 
@@ -374,7 +374,7 @@ def step():
 
         attr=t_pa.label().attr
         attr_ch=[t.label().attr for t in t_pa]
-        fn_reduce_action=get_action_of_prod(prod_id)
+        fn_reduce_action=get_action_of_prod(p)
         fn_reduce_action(attr,attr_ch)
 
         # if attr.get('nfa') is not None:

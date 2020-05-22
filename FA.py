@@ -278,8 +278,9 @@ def draw_mermaid(g:FA):
     for (i,j),s in edge.items():
         if s=='<eps>':
             s='eps'
-        ans+=str(i)+'--"'+s+'"-->'+str(j)+'\n'      
-    return ans
+        print(str(i)+'--"'+s+'"-->'+str(j))
+        
+    return '%d nodes %d edges'%(len(g),len(edge))
 
 def get_dfa_from_nfa(nfa:FA,fn_info_node=lambda x:None):
     """
