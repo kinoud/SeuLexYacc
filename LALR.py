@@ -2,6 +2,17 @@ import copy
 from symbolpool import so
 from symbolpool import Symbol
 
+
+"""
+import LALR as lr
+lr.init()
+lr.addProduction(...)
+...
+lr.addProductionDone(...)
+lr.build()
+# start state id is 0
+"""
+
 class Production:
     """
     productions don't include eps in it, 
@@ -55,7 +66,6 @@ class Item:
     def __repr__(self):
         return str(self)
 
-
 class ItemPool:
     def __init__(self):
         self._items={}
@@ -75,13 +85,24 @@ class ProductionPool:
     def __init__(self):
         self._prods_of={}
         self._productions=[]
+        self._order_of={}
+        self._priority_of={}
 
-    def add(self,p:Production):
+    def add(self,p:Production,priority=None):
         # TODO: check if p is unique
         self._productions.append(p)
         if self._prods_of.get(p.lhs) is None:
             self._prods_of[p.lhs]=[]
         self._prods_of[p.lhs].append(p)
+        if priority is not None:
+            self._priority_of[p]=priority
+        self._order_of[p]=len(self._order_of)
+    
+    def getPriorityOf(self,p:Production):
+        return self._priority_of.get(p)
+    
+    def getOrderOf(self,p:Production):
+        return self._order_of.get(p)
     
     def getProdsOf(self,L:Symbol):
         assert not L.isTerminal(),'L must be non-terminal'
@@ -92,6 +113,7 @@ class ProductionPool:
 
     def __len__(self):
         return len(self._productions)
+
 ppool=ProductionPool()
 
 class State:
@@ -128,13 +150,14 @@ class State:
 
     def genReduceInfo(self):
         self.reduceinfo={}
+        rdc=self.reduceinfo
         for item in self:
             for x in la.getLookaheads(self,item):
                 if item.isEnd():
-                    self.reduceinfo[x]={'p':item.p,'reduce_len':len(item.p),'reduce_to':item.p.lhs}
-
-
-
+                    if rdc.get(x) is not None:
+                        if ppool.getOrderOf(rdc[x]['p'])<ppool.getOrderOf(item.p):
+                            continue
+                    rdc[x]={'p':item.p,'reduce_len':len(item.p),'reduce_to':item.p.lhs}
 
     def getReduceInfo(self,x:Symbol):
         """
@@ -241,9 +264,42 @@ all_symbols=set([eps,eos]) # all symbols include <eps> <eos> S'
 all_transymbols=set() # all symbols that cause transitions (all symbols but <eps> <eos> and S')
 fi={} # dict[Symbol]->set<Symbol>
 ID2state={} # dict[int]->State
+frozen2state={} # dict[frozenset<Item>]->State
+
+priority_of_op={} # int[Symbol]->int
+associ_of_op={} # int[Symbol]->int 0-left 1-right
+
+def setTerminalAssoci(x:Symbol,associ:str):
+    assert associ in ['left','right']
+    associ_of_op[x] = 0 if associ=='left' else 1
+
+def setTerminalPriori(s:Symbol,priority:int):
+    priority_of_op[s] = priority
 
 def init():
     pass
+
+def getAction(i:int,x:Symbol):
+    rinfo=getReduceInfo(i,x)
+    sinfo=getShiftInfo(i,x)
+    if rinfo is None:
+        if sinfo is None:
+            return None
+        else:
+            return sinfo
+    else:
+        if sinfo is None:
+            return rinfo
+        else:
+            pp=ppool.getPriorityOf([rinfo['p']])
+            po=priority_of_op.get(x)
+            if pp is None or po is None:
+                return sinfo
+            if pp>po: return rinfo
+            if pp<po: return sinfo
+            if associ_of_op.get(x) == 1: # right associative
+                return sinfo
+            return rinfo
 
 def getReduceInfo(i,x):
     """
@@ -298,7 +354,6 @@ def CLOSURE_LR1(I:State,h:dict):
         if not change:break
     
     return I,h
-
 
 def CLOSURE_LR0(I:State):
     """
@@ -399,12 +454,15 @@ def FIRST_INIT():
                 if eps not in fi[Y]:break
         if not change:break
 
-def addProduction(lhs,rhs):
+def addProduction(lhs:Symbol,rhs:list,priority=None):
     """
     lhs: Symbol
     rhs: list<Symbol>
+    priority: int
+    :rtype: Production
     """
-    if rhs[0]==eps:
+
+    if len(rhs)>0 and rhs[0]==eps:
         rhs.pop(0)
     all_symbols.add(lhs)
     for s in rhs:
@@ -413,6 +471,17 @@ def addProduction(lhs,rhs):
 
     ppool.add(p)
 
+    print('LALR: add production:',str(p),'     [prio=',priority,']')
+    return p
+
+def addProductionDone(start:Symbol):
+    global Sp,all_symbols
+    Sp=so.getSymbol('<start>',terminal=False,autocreate=True)
+    p=addProduction(Sp,[start])
+    all_transymbols.clear()
+    for syb in all_symbols:
+        if syb not in [eps,Sp,eos]:
+            all_transymbols.add(syb)
     return p
 
 def adp(lhs,rhs):
@@ -429,14 +498,7 @@ def adp(lhs,rhs):
     return addProduction(lhs,rhs)
 
 def adp_done(start):
-    global Sp,all_symbols
-    Sp=so.getSymbol(start[1:],False)
-    all_transymbols.clear()
-    for syb in all_symbols:
-        if syb not in [eps,Sp,eos]:
-            all_transymbols.add(syb)
-
-frozen2state={}
+    return addProductionDone(so.getSymbol(start[1:],False))
 
 def dfs(I:State):
     frozen2state[frozenset(I)] = I

@@ -223,7 +223,7 @@ def build():
 
     lr.init()
     define_actions()
-    bind_action(lr.adp('`<start>',      ['`regex']),                20)
+
     bind_action(lr.adp('`regex',        ['`term']),                 17)
     bind_action(lr.adp('`regex',        ['`term','|','`regex']),    16)
     bind_action(lr.adp('`term',         ['`factor']),               15)
@@ -252,7 +252,7 @@ def build():
     for c in _regex_metachar: 
         bind_action(lr.adp('`metachar', [c]),                       19)
 
-    lr.adp_done('`<start>')
+    bind_action(lr.adp_done('`regex'),                              20)
 
     lr.build()
 
