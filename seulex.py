@@ -21,7 +21,8 @@ bugs:
 def init():
     rx.build()
 
-class LexWriter:
+
+class Writer:
     def __init__(self,framefile,outputfile):
         self.frame_part=[]
         self.user_part=[]
@@ -44,6 +45,20 @@ class LexWriter:
                     t=2
                 else:
                     self.frame_part[-1]+=line
+
+    def writeDown(self):
+        with open(self.outputfile,'w') as f:
+            i,j=0,0
+            for m in self.mark:
+                if m==0:
+                    f.write(self.frame_part[i])
+                    i+=1
+                else:
+                    f.write(self.user_part[j])
+                    j+=1
+        print('writing %s done'%self.outputfile)
+
+class LexWriter(Writer):
     
     def writeToHeaders(self,s:str):
         self.user_part[0]+=s
@@ -57,17 +72,6 @@ class LexWriter:
     def writeToDfa(self,s:str):
         self.user_part[3]+=s
     
-    def writeDown(self):
-        with open(self.outputfile,'w') as f:
-            i,j=0,0
-            for m in self.mark:
-                if m==0:
-                    f.write(self.frame_part[i])
-                    i+=1
-                else:
-                    f.write(self.user_part[j])
-                    j+=1
-        print('writing %s done'%self.outputfile)
 
 class LexReader:
 
@@ -114,7 +118,7 @@ class LexReader:
         
         self._p=q+1
         ans=self._buffer[p:q+1]
-        print('lex read: %s'%repr(ans))
+        print('read input: %s'%repr(ans))
         return ans
     
     def readString(self):
@@ -133,7 +137,7 @@ class LexReader:
         
         self._p=q
         ans=self._buffer[p:q]
-        print('lex read: %s'%repr(ans))
+        print('read input: %s'%repr(ans))
         return ans
 
     def readRegex(self):
@@ -166,7 +170,7 @@ class LexReader:
             q+=1
         self._p=q
         ans=s[p:q]
-        print('lex read: %s'%repr(ans))
+        print('read input: %s'%repr(ans))
         return ans
     
     def readBlock(self):
@@ -198,7 +202,7 @@ class LexReader:
             q+=1
         self._p=q+1
         ans=s[p+1:q]
-        print('lex read: %s'%repr(ans))
+        print('read input: %s'%repr(ans))
         return ans
 
     def readable(self):
@@ -352,24 +356,30 @@ class LexProcessor:
         w.writeToHeaders(self.user_header)
         w.writeToFunctions(self.user_ccode)
         dfa=self.final_dfa
-        w.writeToDfa('n=%d;start=%d;\n'%(len(dfa),dfa.special_node['start']))
+        w.writeToDfa('_n=%d;_start=%d;\n'%(len(dfa),dfa.special_node['start']))
+        count=0
         for i,j,x in dfa.edges():
-            w.writeToDfa('dfa_set_edge(%d,%d,%d);\n'%(i,j,x.getLexyycId()))
+            w.writeToDfa('_dfa_set_edge(%d,%d,%d); '%(i,j,x.getLexyycId()))
+            count+=1
+            if count%3==0:w.writeToDfa('\n')
         
         for rule_id,ccode in self.ccode_of_rule.items():
             fn_name='_lex_action_%d'%rule_id
-            w.writeToActions('void* %s(){\n%s\n}\n'%(fn_name,ccode))
+            w.writeToActions('int %s(){\n%s\n}\n'%(fn_name,ccode))
 
+        count=0
         for u in dfa:
             if dfa.getNodeInfo(u).get('accept')==True:
                 rule_id=dfa.getNodeInfo(u)['rule']
                 fn_name='_lex_action_%d'%rule_id
-                w.writeToDfa('dfa_set_action(%d,%s);\n'%(u,fn_name))
+                w.writeToDfa('_dfa_set_action(%d,%s); '%(u,fn_name))
+                count+=1
+                if count%3==0:w.writeToDfa('\n')
         w.writeDown()
 
 if __name__=='__main__':
     init()
-    reader=LexReader('modified_c99.l')
+    reader=LexReader('test.l')
     writer=LexWriter('lexyyframe.c','lex.yy.c')
     lp=LexProcessor(reader,writer)
     while lp.step():

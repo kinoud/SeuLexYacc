@@ -25,6 +25,7 @@ class Production:
         """
         self.lhs=lhs
         self.rhs=rhs
+        self.id=None
         for syb in rhs:
             assert syb!=eps,'error: production must not contain <eps>(epsilon)'
     
@@ -97,6 +98,7 @@ class ProductionPool:
         if priority is not None:
             self._priority_of[p]=priority
         self._order_of[p]=len(self._order_of)
+        p.id=self._order_of[p]
     
     def getPriorityOf(self,p:Production):
         return self._priority_of.get(p)
@@ -261,7 +263,7 @@ eps = so.getSymbol('<eps>')
 eos = so.getSymbol('<eos>')
 Sp=None # the start symbol (S'-->S)
 all_symbols=set([eps,eos]) # all symbols include <eps> <eos> S'
-all_transymbols=set() # all symbols that cause transitions (all symbols but <eps> <eos> and S')
+all_transymbols=set() # all symbols that cause transitions (all symbols but <eps> <eos> and S'(Sp))
 fi={} # dict[Symbol]->set<Symbol>
 ID2state={} # dict[int]->State
 frozen2state={} # dict[frozenset<Item>]->State
@@ -279,27 +281,34 @@ def setTerminalPriori(s:Symbol,priority:int):
 def init():
     pass
 
+def getState(i:int):
+    return ID2state[i]
+
+def states():
+    for s in ID2state.values():
+        yield s
+
 def getAction(i:int,x:Symbol):
     rinfo=getReduceInfo(i,x)
     sinfo=getShiftInfo(i,x)
     if rinfo is None:
         if sinfo is None:
-            return None
+            return None,''
         else:
-            return sinfo
+            return sinfo,'s'
     else:
         if sinfo is None:
-            return rinfo
+            return rinfo,'r'
         else:
-            pp=ppool.getPriorityOf([rinfo['p']])
+            pp=ppool.getPriorityOf(rinfo['p'])
             po=priority_of_op.get(x)
             if pp is None or po is None:
-                return sinfo
-            if pp>po: return rinfo
-            if pp<po: return sinfo
+                return sinfo,'s'
+            if pp>po: return rinfo,'r'
+            if pp<po: return sinfo,'s'
             if associ_of_op.get(x) == 1: # right associative
-                return sinfo
-            return rinfo
+                return sinfo,'s'
+            return rinfo,'r'
 
 def getReduceInfo(i,x):
     """
@@ -323,6 +332,17 @@ def getShiftInfo(i,x):
     if V is None:
         return None
     return V.id
+
+def actions():
+    for i in ID2state.keys():
+        for x in all_transymbols:
+            a,t=getAction(i,x)
+            if a is None:
+                continue
+            yield i,x,a,t
+        a,t=getAction(i,eos)
+        if a is None:continue 
+        yield i,eos,a,t
 
 def CLOSURE_LR1(I:State,h:dict):
     while True:

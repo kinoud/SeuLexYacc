@@ -253,7 +253,7 @@ def draw_mermaid(g:FA):
     """
     returns: str, graph discription in mermaid format
     """
-    ans='graph TD\n'
+    print('graph TD\n')
     left= ['((','>','[']
     right=['))',']',']']
     for i in g:
@@ -267,7 +267,7 @@ def draw_mermaid(g:FA):
         note=''
         if g.getNodeInfo(i).get('rule') is not None:
             note='('+str(g.getNodeInfo(i).get('rule'))+')'
-        ans+=str(i)+left[t]+'"'+str(i)+note+'"'+right[t]+'\n'
+        print(str(i)+left[t]+'"'+str(i)+note+'"'+right[t])
     
     edge={}
     for i,j,x in g.edges():
