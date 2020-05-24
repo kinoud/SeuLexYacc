@@ -489,7 +489,7 @@ def addProduction(lhs:Symbol,rhs:list,priority=None):
         all_symbols.add(s)
     p=Production(lhs,rhs)
 
-    ppool.add(p)
+    ppool.add(p,priority=priority)
 
     print('LALR: add production:',str(p),'     [prio=',priority,']')
     return p
