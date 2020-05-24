@@ -1,30 +1,30 @@
 %{
-    /*
-    this is a test
-    */
+#include<stdlib.h>
+#define NUMBER  260
+#define ID      261
+#define OMIT    -1
+//user defined token id should > 256
 %}
 
-delim       [ \t\n]
+delim       [ \t]
 ws          {delim}+
 letter      [A-Za-z]
 digit       [0-9]
 id          {letter}({letter}|{digit})*
-number      [+-]?{digit}+(\.{digit}+)?((E|e)[+-]?{digit}+)?
+number      {digit}+(\.{digit}+)?((E|e)[+-]?{digit}+)?
 
 %% 
 
-{ws}        {/* no action and no return */}
-if          {printf("<if>\n");}
-then        {printf("<then>\n");}
-else        {printf("<else>\n");}
-{id}        {printf("<id> %s\n",yytext);}
-{number}    {printf("<number> %s\n",yytext);}
-<           {printf("<LT>\n");}
-<=          {printf("<LE>\n");}
-=           {printf("<EQ>\n");}
-<>          {printf("<NE>\n");}
->           {printf("<GT>\n");}
->=          {printf("<GE>\n");}
+{ws}        {return OMIT;}
+{id}        {return ID;}
+{number}    {yylval=atoi(yytext);return NUMBER;}
+\+           {return '+';}
+-           {return '-';}
+\*           {return '*';}
+/           {return '/';}
+\(           {return '(';}
+\)           {return ')';}
+\n           {return '\n';}
 
 %%
 
