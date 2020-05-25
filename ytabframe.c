@@ -205,7 +205,10 @@ int _step(){
     }
     LNode nxt=_inq[_inq_f];
     int syb=nxt.syb;
-    if(syb==-1)return 1; //omit
+    if(syb==-1){
+        _inq_popleft();
+        return 1; //omit
+    }
     if(syb==-2){
         puts("yacc work is done");
         puts("\nfinal stacks:");
