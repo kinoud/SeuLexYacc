@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<assert.h>
+#define ECHO printf("%s\n",yytext)
 #define $$$
 
 /******************************************************
@@ -98,7 +99,7 @@ int yylex(){
         x=input();
         yytext[yyleng++]=x;
         yytext[yyleng]=0;
-        if(x==-1||_dfa_step(x)!=0){
+        if(x==0||_dfa_step(x)!=0){
             while(yyleng>last_ac_len)
                 unput(yytext[--yyleng]);
             yytext[yyleng]=0;
@@ -110,8 +111,8 @@ int yylex(){
         }
     }
     if(yyleng==0){
-        if(x==-1){
-            printf("lex work is done\n");
+        if(x==0){
+            printf("lex work is done, now returning the last symbol 0\n");
             return 0;
         }else{
             perror("error when tokenizing\n");

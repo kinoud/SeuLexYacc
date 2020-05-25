@@ -145,31 +145,67 @@ class LexReader:
         difference to readString is:
         not always ends when meeting <blank>,
         e.g. [ abc]
+        e.g. " "
         """
         self.skipc(' \n\t')
         p=self._p
         s=self._buffer
         assert p<len(s),'no regex found'
 
-        skip=False
-        h=0
         q=p
-        while q+1<len(s):
-            if s[q] in '\t\n':
-                break
-            elif skip:
-                skip=False
-            elif s[q]=='\\':
-                skip=True
-            elif s[q]=='[':
-                h+=1
-            elif s[q]==']':
-                h-=1
-            elif s[q]==' ' and h==0:
-                break
-            q+=1
+        ans=''
+        
+        cur=0
+        while True:
+            x=s[q]
+            if cur==0:
+                if x=='\\':
+                    cur=1
+                    ans+=x
+                    q+=1
+                elif x=='[':
+                    cur=2
+                    ans+=x
+                    q+=1
+                elif x=='"':
+                    cur=3
+                    q+=1
+                elif x in ' \n\t':
+                    break
+                else:
+                    ans+=x
+                    q+=1
+            elif cur==1:
+                cur=0
+                ans+=x
+                q+=1
+            elif cur==2:
+                if x==']':
+                    cur=0
+                    ans+=x
+                    q+=1
+                else:
+                    ans+=x
+                    q+=1
+            elif cur==3:
+                if x=='"':
+                    cur=0
+                    q+=1
+                elif x=='\\':
+                    cur=4
+                    ans+=x
+                    q+=1
+                else:
+                    if x in rx._regex_specialchar+rx._regex_metachar:
+                        ans+='\\'
+                    ans+=x
+                    q+=1
+            elif cur==4:
+                cur=3
+                ans+=x
+                q+=1
+                
         self._p=q
-        ans=s[p:q]
         print('read input: %s'%repr(ans))
         return ans
     
@@ -185,23 +221,54 @@ class LexReader:
         assert s[p]=='{','no block found'
 
         q=p
-        skip=False
-        h=0
 
-        while q+1<len(s):
-            if skip:
-                skip=False
-            elif s[q]=='\\':
-                skip=True
-            elif s[q]=='{':
-                h+=1
-            elif s[q]=='}':
-                h-=1
-                if h==0:
-                    break
-            q+=1
-        self._p=q+1
-        ans=s[p+1:q]
+        cur=0
+        h=0
+        while True:
+            x=s[q]
+            if cur==0:
+                if x=='{':
+                    q+=1
+                    h+=1
+                elif x=='}':
+                    q+=1
+                    h-=1
+                    if h==0:break 
+                elif x=='"':
+                    cur=1
+                    q+=1
+                elif x=="'":
+                    cur=3
+                    q+=1
+                else:
+                    q+=1
+            elif cur==1:
+                if x=='\\':
+                    cur=2
+                    q+=1
+                elif x=='"':
+                    cur=0
+                    q+=1
+                else:
+                    q+=1
+            elif cur==2:
+                cur=1
+                q+=1
+            elif cur==3:
+                if x=='\\':
+                    cur=4
+                    q+=1
+                elif x=="'":
+                    cur=0
+                    q+=1
+                else:
+                    q+=1
+            elif cur==4:
+                cur=3
+                q+=1
+
+        self._p=q
+        ans=s[p+1:q-1]
         print('read input: %s'%repr(ans))
         return ans
 
@@ -231,8 +298,8 @@ class LexProcessor:
         # rx.draw()
         nfa=rx.get_final_nfa()
         rx.add_nfa(term,nfa)
-        print(fam.draw_mermaid(nfa))
-        print()
+        # print(fam.draw_mermaid(nfa))
+        # print()
         # fam.draw(nfa,{'start':'orange','to':'lightgreen'},verbo=True)
         
 
@@ -250,8 +317,8 @@ class LexProcessor:
         nfa=rx.get_final_nfa()
         nfa.setNodeInfo(nfa.special_node['to'],{'accept':True,'rule':rule_id})
         self.nfa_of_rule[rule_id]=nfa
-        print(fam.draw_mermaid(nfa))
-        print()
+        # print(fam.draw_mermaid(nfa))
+        # print()
         
 
     def addUserCCode(self):
@@ -273,8 +340,8 @@ class LexProcessor:
         nfa.special_node['start']=a
         for i,u in enumerate(start_node):
             nfa.addEdge(a,id_map[i][u],so.getSymbol('<eps>'))
-        print(fam.draw_mermaid(nfa))
-        print()
+        # print(fam.draw_mermaid(nfa))
+        # print()
         def fn_nodeinfo1(nodeinfo_list):
             min_rule=-1
             ans={}
@@ -290,8 +357,8 @@ class LexProcessor:
             return ans
         
         dfa=fam.get_dfa_from_nfa(nfa,fn_nodeinfo1)
-        print(fam.draw_mermaid(dfa))
-        print()
+        # print(fam.draw_mermaid(dfa))
+        # print()
 
         def fn_initial_partition(nodeinfo):
             if nodeinfo.get('accept')==True:

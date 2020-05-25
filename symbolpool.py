@@ -34,15 +34,13 @@ class SymbolPool():
         # predefined symbols
         self.getSymbol('<eps>',autocreate=True) # epsilon (null char)
         self.getSymbol('<eos>',autocreate=True) # end of stream (end of input)
-        self.getSymbol('<newline>',autocreate=True,terminal_id=ord('\n'))
-        self.getSymbol('<tab>',autocreate=True,terminal_id=ord('\t'))
     
     def getSymbol(self,id:str,terminal=True,autocreate=False,terminal_id=None):
         if not autocreate:
             return self._symbol_pool[id]
         if self._symbol_pool.get(id) is None:
             self._symbol_pool[id]=Symbol(id,terminal,terminal_id=terminal_id)
-            print('new symbol(%s): %s'%('ter'if terminal else'non',id))
+            print('new symbol(%s): %s'%('ter'if terminal else'non',repr(id)))
         return self._symbol_pool[id]
 
 so=SymbolPool() # singleton among all other modules

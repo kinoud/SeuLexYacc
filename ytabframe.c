@@ -265,7 +265,8 @@ int _step(){
 FILE *_fp;
 
 char input(){
-    return fgetc(_fp);
+    int x=fgetc(_fp);
+    return x==-1?0:x;
 }
 
 void unput(char x){

@@ -211,9 +211,13 @@ def define_actions():
         a['ch']=a_ch[1]['syb']
         c=str(a_ch[1]['syb'])
         if c=='n':
-            a['ch']=so.getSymbol('<newline>')
+            a['ch']=so.getSymbol('\n',autocreate=True)
         elif c=='t':
-            a['ch']=so.getSymbol('<tab>')
+            a['ch']=so.getSymbol('\t',autocreate=True)
+        elif c=='v':
+            a['ch']=so.getSymbol('\v',autocreate=True)
+        elif c=='f':
+            a['ch']=so.getSymbol('\f',autocreate=True)
     
 def build():
 
@@ -345,7 +349,12 @@ def step():
     sinfo=lr.getShiftInfo(cur,syb)
     rinfo=lr.getReduceInfo(cur,syb)
     if sinfo==None and rinfo==None:
-        print('error(or parsing is done): cannot reduce nor shift') 
+        print('regex parsing done, please check the results:')
+        print('stacks:')
+        show_stacks(showstate=False)
+        if inq[0] != so.getSymbol('<start>') or state_stack[0]!=0:
+            print('(if you see this line, parsing may be wrong)')
+            assert 1==2
         return False
     if sinfo!=None and rinfo!=None:
         print('warning: a shift-reduce conflict happened')
@@ -385,13 +394,13 @@ def step():
         cur=state_stack[-1]
     
     
-    show_stacks(showstate=False)
-    print('')
+    # show_stacks(showstate=False)
+    # print('')
     return True
     
 def get_final_nfa():
     """
     :rtype:FA
     """
-    print('rx: get nfa of "%s"'%str(t_inq[0].label().attr['syb']))
+    # print('rx: get nfa of "%s"'%str(t_inq[0].label().attr['syb']))
     return t_inq[0].label().attr['nfa']
