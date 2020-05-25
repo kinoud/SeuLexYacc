@@ -491,7 +491,11 @@ def addProduction(lhs:Symbol,rhs:list,priority=None):
 
     ppool.add(p,priority=priority)
 
-    print('LALR: add production:',str(p),'     [prio=',priority,']')
+    if priority is None:
+        pri='non'
+    else: pri='%3d'%priority
+
+    print('LALR: new prod (pri=%s):'%pri,str(p))
     return p
 
 def addProductionDone(start:Symbol):

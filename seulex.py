@@ -75,12 +75,13 @@ class LexWriter(Writer):
 
 class LexReader:
 
-    def __init__(self,filename):
+    def __init__(self,filename,verbo=False):
         assert os.path.isfile(filename)
         f=open(filename,'r')
         self._buffer=f.read()
         f.close()
         self._p=0
+        self.verbo=verbo
         pass
     
     def peek(self,k=1):
@@ -118,7 +119,7 @@ class LexReader:
         
         self._p=q+1
         ans=self._buffer[p:q+1]
-        print('read input: %s'%repr(ans))
+        if self.verbo: print('read input: %s'%repr(ans))
         return ans
     
     def readString(self):
@@ -137,7 +138,7 @@ class LexReader:
         
         self._p=q
         ans=self._buffer[p:q]
-        print('read input: %s'%repr(ans))
+        if self.verbo: print('read input: %s'%repr(ans))
         return ans
 
     def readRegex(self):
@@ -206,7 +207,7 @@ class LexReader:
                 q+=1
                 
         self._p=q
-        print('read input: %s'%repr(ans))
+        if self.verbo: print('read input: %s'%repr(ans))
         return ans
     
     def readBlock(self):
@@ -269,7 +270,7 @@ class LexReader:
 
         self._p=q
         ans=s[p+1:q-1]
-        print('read input: %s'%repr(ans))
+        if self.verbo: print('read input: %s'%repr(ans))
         return ans
 
     def readable(self):
@@ -446,7 +447,7 @@ class LexProcessor:
 
 if __name__=='__main__':
     init()
-    reader=LexReader('test.l')
+    reader=LexReader('c99.l')
     writer=LexWriter('lexyyframe.c','lex.yy.c')
     lp=LexProcessor(reader,writer)
     while lp.step():

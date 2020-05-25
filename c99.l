@@ -62,6 +62,7 @@
 #define NE_OP 319
 #define STRING_LITERAL 320
 #define RETURN 321
+#define TYPE_NAME 322
 
 void count(void);
 %}

@@ -57,6 +57,7 @@ class YaccProcessor:
     
     def addToken(self,word_list):
         self.tokens.update(word_list)
+        
 
     def declAssociation(self,word_list,associ:str):
         for word in word_list:
@@ -158,6 +159,30 @@ class YaccProcessor:
             if count%3==0:
                 w.writeToLALR('\n')
         w.writeToLALR('\n')
+        
+
+        name_of={}
+        for syb in so:
+            if syb.isTerminal():
+                if str(syb)[0]!="'" and str(syb) not in self.tokens:
+                    continue
+            else:
+                if self.getYaccId(syb)<0:
+                    continue
+            name_of[self.getYaccId(syb)]='"'+str(syb)+'"'
+        name_str='int _name_of[1000];\nchar _name_str[1000][50]={\n'
+        count=0
+        for i,(id,name) in enumerate(name_of.items()):
+            if i>0:name_str+=',\n'
+            name_str+=name
+            w.writeToLALR('_name_of[%s]=%d;'%(id,i))
+            count+=1
+            if count%4==0:
+                w.writeToLALR('\n')
+        name_str+='\n};'
+        # print(name_str)
+        w.writeToHeaders(name_str)
+
         w.writeDown()
 
     def step(self):
@@ -168,7 +193,6 @@ class YaccProcessor:
                 self.state=1
                 return True
             else:
-                r.readLine()
                 self.state=2
                 return True
         elif self.state==1:
@@ -254,7 +278,7 @@ class YaccProcessor:
 
 
 if __name__=='__main__':
-    reader=YaccReader('test.y')
+    reader=YaccReader('c99.y')
     writer=YaccWriter('ytabframe.c','y.tab.c')
     yp=YaccProcessor(reader,writer)
     while yp.step():

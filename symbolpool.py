@@ -42,5 +42,11 @@ class SymbolPool():
             self._symbol_pool[id]=Symbol(id,terminal,terminal_id=terminal_id)
             print('new symbol(%s): %s'%('ter'if terminal else'non',repr(id)))
         return self._symbol_pool[id]
+    
+    def __iter__(self):
+        return iter(self._symbol_pool.values())
+    
+    def __len__(self):
+        return len(self._symbol_pool)
 
 so=SymbolPool() # singleton among all other modules

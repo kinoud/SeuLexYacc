@@ -175,7 +175,8 @@ int _new_tree(TNode u){
 
 void _dfs(int u){
     TNode tu=_tree_node[u];
-    printf("Tree((%d,%d)",tu.syb,tu.val);
+    //printf("Tree((%d,%d)",tu.syb,tu.val);
+    printf("Tree(\"%s\"",tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
     int h=_edge_head[u];
     if(h==-1){
         printf(",[])");
