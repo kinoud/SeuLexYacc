@@ -180,7 +180,7 @@ void _dfs(int u){
     int h=_edge_head[u];
 	int first_node=1;
     if(h==-1){
-		printf("tree_node_%d=Tree(\"%s\",[])\n",u,tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
+		printf("tree_node_%d=\"%s\"\n",u,tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
         return;
     }
     while(1){
