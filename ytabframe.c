@@ -176,20 +176,27 @@ int _new_tree(TNode u){
 void _dfs(int u){
     TNode tu=_tree_node[u];
     //printf("Tree((%d,%d)",tu.syb,tu.val);
-    printf("Tree(\"%s\"",tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
+    //printf("Tree(\"%s\"",tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
     int h=_edge_head[u];
+	int first_node=1;
     if(h==-1){
-        printf(",[])");
+		printf("tree_node_%d=Tree(\"%s\",[])\n",u,tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
         return;
     }
-    printf(",[");
     while(1){
         _dfs(_edge_to[h]);
         h=_edge_next[h];
         if(h==-1)break;
-        printf(",");
     }
-    printf("])");
+	printf("tree_node_%d=Tree(\"%s\",[",u,tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
+	h=_edge_head[u];
+	while(1){
+		if(first_node)first_node=0;else putchar(',');
+		printf("tree_node_%d",_edge_to[h]);
+        h=_edge_next[h];
+        if(h==-1)break;
+    }
+	puts("])");
 }
 
 
@@ -216,8 +223,10 @@ int _step(){
         _print();
         _tree_root=nxt.tree_id;
         //printf("root = %d\n",nxt.tree_id);
-        puts("\ngrammer tree:");
+        puts("\ngrammer tree draw code:");
+		puts("from nltk.tree import Tree\nfrom nltk.draw.tree import draw_trees\n");
         _dfs(_tree_root);
+		printf("draw_trees(tree_node_%d)\n",_tree_root);
         puts("");
         return 0;
     }
