@@ -114,11 +114,15 @@ int yylex(){
     }
     if(yyleng==0){
         if(x==0){
+#ifdef _LEX_DBG_PRT
             printf("lex work is done, now returning the last symbol 0\n");
+#endif
             return 0;
         }else{
+#ifdef _LEX_DBG_PRT
             perror("error when tokenizing\n");
             printf("last input char: %d\n",x);
+#endif
             return -3;
         }
     };
