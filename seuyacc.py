@@ -42,23 +42,28 @@ class YaccWriter(Writer):
         self.user_part[3]+=s
 
 class YaccProcessor:
-    def __init__(self,reader:YaccReader,writer:YaccWriter):
+    def __init__(self,reader:YaccReader,writer:YaccWriter,generateTokenH:str='',nonTerminalStartID:int=0):
         self.writer=writer
         self.reader=reader
+        self.generateTokenH=generateTokenH
         self.state=0
         self.tokens=set() # set<str>
         self.action_of_p={} # dict[Production]->str
+        self.action_type_of_s = {} # dict[Symbol]->str
         self.start_syb=None # Symbol
         self._priority=0
         self._pri_of={}
         self._id_of_nonter={}
+        self.current_type='int'
         # non terminal symbol id start from base
         # so, all token id user defined should < base
-        self._id_of_nonter_base=500 
+        self._id_of_nonter_base=nonTerminalStartID 
 
     
     def addToken(self,word_list):
         self.tokens.update(word_list)
+        for word in word_list:
+            self.action_type_of_s[so.getSymbol(word,autocreate=True)]=self.current_type
         
 
     def declAssociation(self,word_list,associ:str):
@@ -132,10 +137,13 @@ class YaccProcessor:
             for x in act:
                 if flag:
                     if x=='$':
-                        res+='(*_ch_val[0])'
+                        res+='(*(%s*)(*(_ch_val[0])))'%self.action_type_of_s.get(p.lhs)
                     else:
                         assert x.isdigit()
-                        res+='(*_ch_val[%s])'%x
+                        type_str=self.action_type_of_s.get(p[int(x)-1])
+                        if type_str is None:
+                            type_str="int"
+                        res+='(*(%s*)(*(_ch_val[%s])))'%(type_str,x)
                     flag=False
                 elif x=='$':
                     flag=True
@@ -144,7 +152,7 @@ class YaccProcessor:
 
             fn_name='_yacc_action_p%d'%id
             
-            res='void %s(){\n%s\n}\n'%(fn_name,res)
+            res='void %s(){\n(*(_ch_val[0]))=(int*)malloc(sizeof(%s));\n%s\n}\n'%(fn_name,self.action_type_of_s.get(p.lhs),res)
             w.writeToActions(res)
             w.writeToLALR('_action_of_p[%d]=%s;\n'%(id,fn_name))
 
@@ -189,6 +197,14 @@ class YaccProcessor:
         w.writeToHeaders(name_str)
 
         w.writeDown()
+    
+    def genYtabh(self):
+        with open(self.generateTokenH,'w') as f:
+            id=256
+            for token in self.tokens:
+                f.write('#define '+token+' '+str(id)+'\n')
+                id+=1
+
 
     def step(self):
         r=self.reader
@@ -212,6 +228,9 @@ class YaccProcessor:
             r.skipBlankLines()
             if r.peek(2)=='%%':
                 r.readLine()
+                if self._id_of_nonter_base==0:
+                    self._id_of_nonter_base=256+len(self.tokens)
+                print("Non-terminal start id: "+str(self._id_of_nonter_base))
                 self.state=3
                 return True
 
@@ -226,11 +245,17 @@ class YaccProcessor:
             if meta=='token':
                 self.addToken(words)
             elif meta=='start':
+                assert len(words)==1,'Too many start'
                 self.declStart(words[0])
             elif meta=='left':
                 self.declAssociation(words,'left')
             elif meta=='right':
                 self.declAssociation(words,'right')
+            elif meta=='type':
+                assert len(words)==1,'Too many type'
+                self.current_type=words[0]
+            else:
+                assert False,'Unknown meta'
             return True
         elif self.state==3:
             r.skipBlankLines()
@@ -240,7 +265,23 @@ class YaccProcessor:
                 r.readLine()
                 return True
 
+            if r.peek(1)=='%':
+                meta=r.readString()
+                meta=meta[1:]
+                words=[]
+                r.skipc(' \t')
+                while r.peek()!='\n':
+                    words.append(r.readString())
+                    r.skipc(' \t')
+                if meta=='type':
+                    assert len(words)==1,'Too many type'
+                    self.current_type=words[0]
+                else:
+                    assert False,'Unknown meta'
+
+
             lhs=r.readString()
+            self.action_type_of_s[so.getSymbol(lhs,terminal=False,autocreate=True)]=self.current_type
             rhs=None
             while True:
                 r.skipc(' \t\n')
@@ -276,31 +317,63 @@ class YaccProcessor:
 
             lr.addProductionDone(self.start_syb)
             lr.build()
+            self.action_type_of_s[so.getSymbol('<start>')]=self.action_type_of_s[self.start_syb]
 
-            self.genYtabc() 
+            if len(self.generateTokenH)>0:
+                self.genYtabh()
+
+            self.genYtabc()
         
         return False
 
 
 if __name__=='__main__':
-    if len(sys.argv)==1:
-        print('please declare .y file')
-        quit()
     outdir='.'
-    yaccfile=sys.argv[1]
+    argvState=0
+    yaccfile=''
+    generateTokenH=False
+    passCnt=0
+    nonTerminalStartID=0
+    for i in range(len(sys.argv)):
+        if passCnt>0:
+            passCnt-=1
+            continue
+        v=sys.argv[i]
+        if argvState==0:
+            argvState=1
+        else:
+            if v[0]=='-':
+                if v=='-h' or v=='--auto-gen-h':
+                    generateTokenH=True
+                elif v=='-s' or v=='--nonterminal-start-id':
+                    nonTerminalStartID=int(sys.argv[i+1])
+                    passCnt+=1
+            elif argvState==1:
+                argvState=2
+                yaccfile=v
+            elif argvState==2:
+                argvState=3
+                outdir=v
+            elif argvState==3:
+                print('Too many arguments!')
+                quit()
+    if argvState<2:
+        print('please provide .y file')
+        quit()
+    print("Parameters:")
+    print("Input from "+yaccfile)
+    print("Output to "+outdir)
+    print("generate h file: "+str(generateTokenH))
+    print("Non-terminal start ID: "+(str(nonTerminalStartID) if nonTerminalStartID!=0 else 'auto'))
     assert os.path.isfile(yaccfile),'.y file not exists!'
-    if len(sys.argv)>2:
-        outdir=sys.argv[2]
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     outfile=os.path.join(outdir,'y.tab.c')
-
     samedir=os.path.dirname(__file__)
     framefile=os.path.join(samedir,'ytabframe.c')
-
     reader=YaccReader(yaccfile)
     writer=YaccWriter(framefile,outfile)
-    yp=YaccProcessor(reader,writer)
+    yp=YaccProcessor(reader,writer,os.path.join(outdir,'y.tab.h') if generateTokenH else '',nonTerminalStartID)
     while yp.step():
         pass
     

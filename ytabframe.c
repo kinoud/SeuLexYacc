@@ -1,6 +1,8 @@
-#include<stdio.h>
-#include<assert.h>
-#include<string.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 #define $$$
 
 /*******************************
@@ -10,11 +12,11 @@
 $$$
 
 
-int *_ch_val[100];
+int **_ch_val[100];
 int _ch_num;
 int _pa_val;
 
-#include "lex.yy.c"
+#include "lex.yy.h"
 
 /*******************************
  * gen by yacc
@@ -53,7 +55,7 @@ int _state_stack[1000000],_st_top=0;
 
 struct TreeNode{
     int syb;
-    int val;
+    int *val;
 };
 
 typedef struct TreeNode TNode;
@@ -171,11 +173,18 @@ int _new_tree(TNode u){
     return _node_cnt-1;
 }
 
+void _dfs_clean(int u){
+    TNode tu=_tree_node[u];
+    int h=_edge_head[u];
+	while(h!=-1){
+        _dfs_clean(_edge_to[h]);
+        h=_edge_next[h];
+    }
+    free(tu.val);
+}
 
 void _dfs(int u){
     TNode tu=_tree_node[u];
-    //printf("Tree((%d,%d)",tu.syb,tu.val);
-    //printf("Tree(\"%s\"",tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
     int h=_edge_head[u];
 	int first_node=1;
     if(h==-1){
@@ -206,8 +215,14 @@ int _step(){
     int cur=_state_stack[_st_top];
     if(_inq_len()==0){
         int syb=yylex();
-        int val=yylval;
-        _inq_append((LNode){syb,_new_tree((TNode){syb,val})});
+        int*valptr;
+        if(yyaval==NULL){
+            valptr=(int*)malloc(sizeof(int));
+            *valptr=yylval;
+        }else{
+            valptr=yyaval;
+        }
+        _inq_append((LNode){syb,_new_tree((TNode){syb,valptr})});
         //printf("call yylex() get: %d val=%d\n",syb,val);
     }
     LNode nxt=_inq[_inq_f];
@@ -244,8 +259,8 @@ int _step(){
         int len=_rdc_len[cur][syb],
             to=_rdc_to[cur][syb];
 
-        int u=_new_tree((TNode){to,-1});
-        
+        int u=_new_tree((TNode){to,NULL});
+
         _ch_val[0]=&(_tree_node[u].val);
         assert(_ch_val[0]!=0);
         assert(_ch_val[0]!=NULL);
@@ -295,5 +310,6 @@ int main(int argc,char** argv){
     _lexyy_init();
     _ytab_init();
     while(_step());
+    _dfs_clean(_tree_root);
     puts("\nparsing done, please check the results");
 }
