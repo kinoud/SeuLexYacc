@@ -1,4 +1,7 @@
-#include "lex.yy.c"
+#include<stdio.h>
+#include<string.h>
+#include<assert.h>
+#include "lex.yy.h"
 
 
 FILE *_fp;
@@ -11,16 +14,17 @@ void unput(char x){
     ungetc(x,_fp);
 }
 
-int main(){
+int main(int argc,char** argv){
     _lexyy_init();
-    _fp=fopen("in.c","r");
+    assert(argc>=2);
+    _fp=fopen(argv[1],"r");
     if(_fp==NULL){
-        printf("open file error!\n");
+        puts("open file error");
         return 0;
     }
     while(1){
         int tk=yylex();
-        if(tk==-1)continue;
+        if(tk==OMIT)continue;
         if(tk<-1)break;
         printf("token%4d [%s]         yylval=%d\n",tk,yytext,yylval);
         if(tk==0)break;

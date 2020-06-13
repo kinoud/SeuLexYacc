@@ -558,7 +558,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   - `addToken(word_list:list[str])`
 
-    Token是指在`.y`文件中以`%token`标记的标识符，这些标识符将被当作终结符来处理。`word_list`是一个字符串列表，每个字符串是一个在`.y`文件中以`%token`标记的标识符。
+    Token是指在`.y`文件中以`%token`标记的标识符，这些标识符将被当作终结符来处理。`word_list`是一个字符串列表，每个字符串是一个在`.y`文件中以`%token`标记的标识符。同时把当前最后一次`%type`的类型(没有`%type`默认为`int`)与这些`word`关联。
 
   - `declAssociation(word_list:list[str],associ:str)`
 
@@ -572,7 +572,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
     Yacc中符号的ID指的是该符号在最终的语法分析器`y.tab.c`中标识该符号的唯一整型值。对于终结符号（Token），它的ID是由用户在`.l`的头文件部分中定义的，对于非终结符号，我们需要在Yacc中生成它的ID，此函数即是给`syb`分配一个唯一的ID，此ID将用于`y.tab.c`中作为该符号的唯一标识。
 
-    需要注意的是，我们约定用户在`.l`中定义的Token ID的值在区间`[256,499]`之间。这是因为，`[0,255]`是保留给字符终结符的ID，即它们的ASCII码，而`assignYaccId`函数生成非终结符号ID的基点是500，此值可以修改，它保存在`YaccProcessor`的成员变量`_id_of_nonter_base`中。
+    需要注意的是，我们约定用户在`.l`中定义的Token ID的值在区间`[256,255+len(Tokens)]`之间，直接通SEUYacc生成的Token ID结果即符合要求。但在其他情况下，需要用`-s {val}`声明Token ID的最大值小于`{val}`。这是因为我们对这个符号采用同一个ID空间，其中`[0,255]`是词法分析与语法分析的终结符，`[256,{val}-1]`是语法分析终结符，`{val}`以上才是终结符。
 
   - `getYaccId(syb:Symbol)`
 
@@ -600,9 +600,9 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 **对用户开放的变量和方法：**
 
-- `char yytext[1000000]; int yyleng; int yylval;`
+- `char yytext[MAX_TOKEN_SIZE]; int yyleng; int yylval;int*yyaval;`
 
-  词法分析器匹配成功的字符串，`yytext`中存储了字符串的内容，`yyleng`是它的长度，`yylval`是它的属性值，此值应当由用户在匹配动作中赋值。
+  词法分析器匹配成功的字符串，`yytext`中存储了字符串的内容，`yyleng`是它的长度。`lexyycdriver.c`中`yylval`是它的属性值，此值应当由用户在匹配动作中赋值。YACC中如果为`yyaval`是由`malloc`申请的指向任意类型的属性值的指针，此值也应当由用户在匹配动作中赋值。如果用户没有给`yyaval`赋值，那么默认`yylval`是它的属性值，属性值类型是`int`。注意类型要与YACC中写的匹配。
 
 - `int yylex();`
 
@@ -622,7 +622,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 **内部实现相关：**
 
-- `int _n,_start,_cur;`
+- `int _n,_start_node,_cur;`
 
   DFA总节点数，开始节点，当前所在节点。
 
@@ -866,6 +866,8 @@ pip install nltk -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 回车后，等待下载安装完成即可。
 
+nltk 库并不是必须的，只有在需要画树的情况下才需要被安装。
+
 ### 4.2 SeuLexYacc的使用方法
 
 首先，你需要激活虚拟环境`(seulexyacc)`并成功安装`nltk`包，然后在命令行界面进入`SeuLexYacc`文件夹。
@@ -886,16 +888,20 @@ python seulex.py c99.l minic
 
 为了单独测试`lex.yy.c`文件，我们将位于`SeuLexYacc`文件夹下的`lexyycdriver.c`文件复制粘贴到`minic`文件夹下。同时我们也将被测程序文件`in.c`从`SeuLexYacc`文件夹下复制到`minic`文件夹下。
 
-此时，`minic`文件夹下应当包括三个文件：
+此时，`minic`文件夹下应当包括5个文件：
 
 1. `lex.yy.c`
-2. `lexyycdriver.c`
-3. `in.c`
+2. `lex.yy.h`
+3. `lexyycdriver.c`
+4. `in.c`
+5. `y.tab.h`
+
+其中`y.tab.h`是在下一节中可以用seuyacc生成的所有Token对应的ID定义。你也可以自己编写这个文件来任意指定ID，只要ID超过255即可。
 
 然后，我们编译`lexyycdriver.c`。在`minic`文件夹下打开命令行窗口，键入命令：
 
 ```bash
-gcc lexyycdriver.c -o lexyycdriver
+gcc lex.yy.c lexyycdriver.c -o lexyycdriver
 ```
 
 编译结束后，使用下面命令对`in.c`进行词法分析：
@@ -913,18 +919,24 @@ seuyacc的使用应当紧跟在seulex之后，我们假设你已经在`minic`文
 键入下列命令以运行`seuyacc.py`脚本：
 
 ```bash
-python seuyacc.py c99.y minic
+python seuyacc.py -h c99.y minic
 ```
 
-此脚本接收2个参数，第1个参数`c99.y`是Yacc文件的位置，第2个参数`minic`是保存生成结果（`y.tab.c`）的文件夹，如不指定，则默认将生成文件保存到当前工作目录下。
+此脚本首先接收2个参数，第1个参数`c99.y`是Yacc文件的位置，第2个参数`minic`是保存生成结果（`y.tab.c`）的文件夹，如不指定第2个参数，则默认将生成文件保存到当前工作目录下。此外，这个脚本还接受以下可选参数：
+
+`-h` 或者 `--auto-gen-h` 表示会生成一个 `y.tab.h` 的文件，里面自动定义了每个Token的ID(可以给Lex也可以给Yacc引用)。
+`-s` 或者 `--nonterminal-start-id` 表示非终结符从接下来一个参数(整数值)开始编号，这个数值应当大于Token ID的最大值。使用`-h`自动分配Token ID时，这个值会自动编号，不需要指定。
 
 键入回车，等待运行完毕。然后你将会在`minic`文件夹中看到`y.tab.c`文件。
 
-此时，你的`minic`文件夹下应当至少包含以下3个文件：
+此时，你的`minic`文件夹下应当至少包含以下6个文件：
 
 1. `lex.yy.c`
-3. `in.c`
-4. `y.tab.c`
+2. `lex.yy.h`
+3. `lexyycdriver.c`
+4. `in.c`
+5. `y.tab.c`
+6. `y.tab.h`
 
 键入下面的命令编译`y.tab.c`：
 
@@ -957,6 +969,8 @@ grammer tree draw code:
 为了将这棵语法树画出来，在`python`命令行中（请先确保你已经激活了`(seulexyacc)`虚拟环境）键入上述省略号所代表的全部代码。
 
 敲击回车后，将会弹出一个窗口，语法树被绘制在其中。
+
+在 Yacc 文件中，除了`%left`,`%right`,`%start`,`%token`,`%prec`外，还支持`%type TYPE_NAME`。它可以在META段可以在产生式段使用，每个Token或者产生式所对应的类型都是它之前最近一个`%type`指定的，如果之前没有`%type`则默认类型是`int`。
 
 ## 5 测试用例与结果分析
 
