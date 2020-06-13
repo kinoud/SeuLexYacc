@@ -572,7 +572,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
     Yacc中符号的ID指的是该符号在最终的语法分析器`y.tab.c`中标识该符号的唯一整型值。对于终结符号（Token），它的ID是由用户在`.l`的头文件部分中定义的，对于非终结符号，我们需要在Yacc中生成它的ID，此函数即是给`syb`分配一个唯一的ID，此ID将用于`y.tab.c`中作为该符号的唯一标识。
 
-    需要注意的是，我们约定用户在`.l`中定义的Token ID的值在区间`[256,499]`之间。这是因为，`[0,255]`是保留给字符终结符的ID，即它们的ASCII码，而`assignYaccId`函数生成非终结符号ID的基点是500，此值可以修改，它保存在`YaccProcessor`的成员变量`_id_of_nonter_base`中。
+    需要注意的是，我们约定用户在`.l`中定义的Token ID的值在区间`[256,255+len(Tokens)]`之间，直接通SEUYacc生成的Token ID结果即符合要求。但在其他情况下，需要用`-s {val}`声明Token ID的最大值小于`{val}`。这是因为我们对这个符号采用同一个ID空间，其中`[0,255]`是词法分析与语法分析的终结符，`[256,{val}-1]`是语法分析终结符，`{val}`以上才是终结符。
 
   - `getYaccId(syb:Symbol)`
 
@@ -622,7 +622,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 **内部实现相关：**
 
-- `int _n,_start,_cur;`
+- `int _n,_start_node,_cur;`
 
   DFA总节点数，开始节点，当前所在节点。
 
@@ -895,7 +895,7 @@ python seulex.py c99.l minic
 然后，我们编译`lexyycdriver.c`。在`minic`文件夹下打开命令行窗口，键入命令：
 
 ```bash
-gcc lexyycdriver.c -o lexyycdriver
+gcc lex.yy.c lexyycdriver.c -o lexyycdriver
 ```
 
 编译结束后，使用下面命令对`in.c`进行词法分析：

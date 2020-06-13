@@ -1,6 +1,7 @@
-#include<stdio.h>
-#include<assert.h>
-#include<string.h>
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+#include <ctype.h>
 #define $$$
 
 /*******************************
@@ -14,7 +15,7 @@ int *_ch_val[100];
 int _ch_num;
 int _pa_val;
 
-#include "lex.yy.c"
+#include "lex.yy.h"
 
 /*******************************
  * gen by yacc
