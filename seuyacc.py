@@ -42,9 +42,10 @@ class YaccWriter(Writer):
         self.user_part[3]+=s
 
 class YaccProcessor:
-    def __init__(self,reader:YaccReader,writer:YaccWriter):
+    def __init__(self,reader:YaccReader,writer:YaccWriter,generateTokenH:str='',nonTerminalStartID:int=0):
         self.writer=writer
         self.reader=reader
+        self.generateTokenH=generateTokenH
         self.state=0
         self.tokens=set() # set<str>
         self.action_of_p={} # dict[Production]->str
@@ -54,7 +55,7 @@ class YaccProcessor:
         self._id_of_nonter={}
         # non terminal symbol id start from base
         # so, all token id user defined should < base
-        self._id_of_nonter_base=500 
+        self._id_of_nonter_base=nonTerminalStartID 
 
     
     def addToken(self,word_list):
@@ -189,6 +190,14 @@ class YaccProcessor:
         w.writeToHeaders(name_str)
 
         w.writeDown()
+    
+    def genYtabh(self):
+        with open(self.generateTokenH,'w') as f:
+            id=256
+            for token in self.tokens:
+                f.write('#define '+token+' '+str(id)+'\n')
+                id+=1
+
 
     def step(self):
         r=self.reader
@@ -212,6 +221,9 @@ class YaccProcessor:
             r.skipBlankLines()
             if r.peek(2)=='%%':
                 r.readLine()
+                if self._id_of_nonter_base==0:
+                    self._id_of_nonter_base=256+len(self.tokens)
+                print("Non-terminal start id: "+str(self._id_of_nonter_base))
                 self.state=3
                 return True
 
@@ -277,30 +289,61 @@ class YaccProcessor:
             lr.addProductionDone(self.start_syb)
             lr.build()
 
-            self.genYtabc() 
+            if len(self.generateTokenH)>0:
+                self.genYtabh()
+
+            self.genYtabc()
         
         return False
 
 
 if __name__=='__main__':
-    if len(sys.argv)==1:
-        print('please declare .y file')
-        quit()
     outdir='.'
-    yaccfile=sys.argv[1]
+    argvState=0
+    yaccfile=''
+    generateTokenH=False
+    passCnt=0
+    nonTerminalStartID=0
+    for i in range(len(sys.argv)):
+        if passCnt>0:
+            passCnt-=1
+            continue
+        v=sys.argv[i]
+        if argvState==0:
+            argvState=1
+        else:
+            if v[0]=='-':
+                if v=='-h' or v=='--auto-gen-h':
+                    generateTokenH=True
+                elif v=='-s' or v=='--nonterminal-start-id':
+                    nonTerminalStartID=int(sys.argv[i+1])
+                    passCnt+=1
+            elif argvState==1:
+                argvState=2
+                yaccfile=v
+            elif argvState==2:
+                argvState=3
+                outdir=v
+            elif argvState==3:
+                print('Too many arguments!')
+                quit()
+    if argvState<2:
+        print('please provide .y file')
+        quit()
+    print("Parameters:")
+    print("Input from "+yaccfile)
+    print("Output to "+outdir)
+    print("generate h file: "+str(generateTokenH))
+    print("Non-terminal start ID: "+(str(nonTerminalStartID) if nonTerminalStartID!=0 else 'auto'))
     assert os.path.isfile(yaccfile),'.y file not exists!'
-    if len(sys.argv)>2:
-        outdir=sys.argv[2]
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     outfile=os.path.join(outdir,'y.tab.c')
-
     samedir=os.path.dirname(__file__)
     framefile=os.path.join(samedir,'ytabframe.c')
-
     reader=YaccReader(yaccfile)
     writer=YaccWriter(framefile,outfile)
-    yp=YaccProcessor(reader,writer)
+    yp=YaccProcessor(reader,writer,os.path.join(outdir,'y.tab.h') if generateTokenH else '',nonTerminalStartID)
     while yp.step():
         pass
     

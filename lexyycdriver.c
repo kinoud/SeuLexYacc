@@ -1,4 +1,7 @@
-#include "lex.yy.c"
+#include<stdio.h>
+#include<string.h>
+#include<assert.h>
+#include "lex.yy.h"
 
 
 FILE *_fp;
@@ -20,7 +23,7 @@ int main(){
     }
     while(1){
         int tk=yylex();
-        if(tk==-1)continue;
+        if(tk==OMIT)continue;
         if(tk<-1)break;
         printf("token%4d [%s]         yylval=%d\n",tk,yytext,yylval);
         if(tk==0)break;

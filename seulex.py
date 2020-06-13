@@ -424,7 +424,7 @@ class LexProcessor:
         w.writeToHeaders(self.user_header)
         w.writeToFunctions(self.user_ccode)
         dfa=self.final_dfa
-        w.writeToDfa('_n=%d;_start=%d;\n'%(len(dfa),dfa.special_node['start']))
+        w.writeToDfa('_n=%d;_start_node=%d;\n'%(len(dfa),dfa.special_node['start']))
         count=0
         for i,j,x in dfa.edges():
             w.writeToDfa('_dfa_set_edge(%d,%d,%d); '%(i,j,x.getLexyycId()))
@@ -457,6 +457,9 @@ if __name__=='__main__':
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     outfile=os.path.join(outdir,'lex.yy.c')
+
+    with open('lexyyframe.h','r') as inf,open(os.path.join(outdir,'lex.yy.h'),'w') as outf:
+        outf.write(inf.read())
 
     samedir=os.path.dirname(__file__)
     framefile=os.path.join(samedir,'lexyyframe.c')

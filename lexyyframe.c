@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<string.h>
 #include<assert.h>
+#include "lex.yy.h"
 #define ECHO printf("%s\n",yytext)
 #define $$$
 
@@ -12,12 +13,10 @@
 $$$
 
 // int yylval; NOTE: defined in driver program (such as y.tab.c)
-char yytext[1000000];
+char yytext[MAX_TOKEN_SIZE];
 int yyleng;
 int yylval;
 int yylex();
-char input(); // NOTE: defined in driver program (such as y.tab.c)
-void unput(char); // NOTE: defined in driver program (such as y.tab.c)
 /******************************************************
  * gen by lex
  * user defined functions
@@ -35,7 +34,7 @@ $$$
 /****************************************************
  * dfa things
  ****************************************************/
-int _n,_start,_cur;
+int _n,_start_node,_cur;
 int _to[5000][256];
 int _accept[5000];
 int (*_action_of_node[5000])(); // actions are functions that return token id (int)
@@ -94,7 +93,7 @@ int yylex(){
     int last_ac=-1,last_ac_len=0;
     yyleng=0;
     yylval=-1;
-    _cur=_start;
+    _cur=_start_node;
     char x;
     while(1){
         x=input();
