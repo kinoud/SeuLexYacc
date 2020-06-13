@@ -16,6 +16,7 @@ $$$
 char yytext[MAX_TOKEN_SIZE];
 int yyleng;
 int yylval;
+int*yyaval;
 int yylex();
 /******************************************************
  * gen by lex
@@ -93,6 +94,7 @@ int yylex(){
     int last_ac=-1,last_ac_len=0;
     yyleng=0;
     yylval=-1;
+    yyaval=NULL;
     _cur=_start_node;
     char x;
     while(1){
