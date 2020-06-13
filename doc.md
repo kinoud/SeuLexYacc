@@ -622,19 +622,23 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 **内部实现相关：**
 
+- `#define _DFA_NODE_CNT ***`
+
+  DFA总节点数(可以用于数组定义的格式)，具体数字由seulex生成。
+
 - `int _n,_start_node,_cur;`
 
   DFA总节点数，开始节点，当前所在节点。
 
-- `int _to[5000][256];`
+- `int _to[_DFA_NODE_CNT][256];`
 
   DFA的边。第一个下标是节点编号，第二个下标是以ASCII码表示的字符。若无该边，则值为-1。
 
-- `int _accept[5000];`
+- `int _accept[_DFA_NODE_CNT];`
 
   标记每个节点是否是接收状态，1表示是，0表示否。
 
-- `int (*_action_of_node[5000])();`
+- `int (*_action_of_node[_DFA_NODE_CNT])();`
 
   一个函数指针数组，存储了接收状态的动作，该动作返回一个整型值，即匹配的Token ID。下标是节点编号。
 
