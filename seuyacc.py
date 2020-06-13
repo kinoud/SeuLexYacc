@@ -49,10 +49,12 @@ class YaccProcessor:
         self.state=0
         self.tokens=set() # set<str>
         self.action_of_p={} # dict[Production]->str
+        self.action_type_of_s = {} # dict[Symbol]->str
         self.start_syb=None # Symbol
         self._priority=0
         self._pri_of={}
         self._id_of_nonter={}
+        self.current_type='int'
         # non terminal symbol id start from base
         # so, all token id user defined should < base
         self._id_of_nonter_base=nonTerminalStartID 
@@ -60,6 +62,8 @@ class YaccProcessor:
     
     def addToken(self,word_list):
         self.tokens.update(word_list)
+        for word in word_list:
+            self.action_type_of_s[so.getSymbol(word,autocreate=True)]=self.current_type
         
 
     def declAssociation(self,word_list,associ:str):
@@ -133,10 +137,10 @@ class YaccProcessor:
             for x in act:
                 if flag:
                     if x=='$':
-                        res+='(*_ch_val[0])'
+                        res+='(*(%s*)(*(_ch_val[0])))'%self.action_type_of_s.get(p.lhs)
                     else:
                         assert x.isdigit()
-                        res+='(*_ch_val[%s])'%x
+                        res+='(*(%s*)(*(_ch_val[%s])))'%(self.action_type_of_s.get(p[int(x)-1]),x)
                     flag=False
                 elif x=='$':
                     flag=True
@@ -145,7 +149,7 @@ class YaccProcessor:
 
             fn_name='_yacc_action_p%d'%id
             
-            res='void %s(){\n%s\n}\n'%(fn_name,res)
+            res='void %s(){\n(*(_ch_val[0]))=(int*)malloc(sizeof(%s));\n%s\n}\n'%(fn_name,self.action_type_of_s.get(p.lhs),res)
             w.writeToActions(res)
             w.writeToLALR('_action_of_p[%d]=%s;\n'%(id,fn_name))
 
@@ -238,11 +242,17 @@ class YaccProcessor:
             if meta=='token':
                 self.addToken(words)
             elif meta=='start':
+                assert len(words)==1,'Too many start'
                 self.declStart(words[0])
             elif meta=='left':
                 self.declAssociation(words,'left')
             elif meta=='right':
                 self.declAssociation(words,'right')
+            elif meta=='type':
+                assert len(words)==1,'Too many type'
+                self.current_type=words[0]
+            else:
+                assert False,'Unknown meta'
             return True
         elif self.state==3:
             r.skipBlankLines()
@@ -252,7 +262,23 @@ class YaccProcessor:
                 r.readLine()
                 return True
 
+            if r.peek(1)=='%':
+                meta=r.readString()
+                meta=meta[1:]
+                words=[]
+                r.skipc(' \t')
+                while r.peek()!='\n':
+                    words.append(r.readString())
+                    r.skipc(' \t')
+                if meta=='type':
+                    assert len(words)==1,'Too many type'
+                    self.current_type=words[0]
+                else:
+                    assert False,'Unknown meta'
+
+
             lhs=r.readString()
+            self.action_type_of_s[so.getSymbol(lhs,terminal=False,autocreate=True)]=self.current_type
             rhs=None
             while True:
                 r.skipc(' \t\n')
@@ -288,6 +314,7 @@ class YaccProcessor:
 
             lr.addProductionDone(self.start_syb)
             lr.build()
+            self.action_type_of_s[so.getSymbol('<start>')]=self.action_type_of_s[self.start_syb]
 
             if len(self.generateTokenH)>0:
                 self.genYtabh()

@@ -14,11 +14,12 @@ void unput(char x){
     ungetc(x,_fp);
 }
 
-int main(){
+int main(int argc,char** argv){
     _lexyy_init();
-    _fp=fopen("in.c","r");
+    assert(argc>=2);
+    _fp=fopen(argv[1],"r");
     if(_fp==NULL){
-        printf("open file error!\n");
+        puts("open file error");
         return 0;
     }
     while(1){

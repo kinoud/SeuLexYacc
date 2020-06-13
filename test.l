@@ -1,9 +1,6 @@
 %{
-#include<stdlib.h>
-#define NUMBER  260
-#define ID      261
-#define OMIT    -1
-//user defined token id should > 256
+#include <stdlib.h>
+#include "test.h"
 %}
 
 delim       [ \t]
@@ -18,6 +15,12 @@ number      {digit}+(\.{digit}+)?((E|e)[+-]?{digit}+)?
 {ws}        {return OMIT;}
 {id}        {return ID;}
 {number}    {yylval=atoi(yytext);return NUMBER;}
+{digit}--{digit} {
+yyaval=(int*)malloc(sizeof(Magic));
+((Magic*)yyaval)->x=0x30^yytext[0];
+((Magic*)yyaval)->y=0x30^yytext[3];
+return MAGIC;
+}
 \+           {return '+';}
 -           {return '-';}
 \*           {return '*';}
