@@ -14,6 +14,7 @@ $$$
 // int yylval; NOTE: defined in driver program (such as y.tab.c)
 char yytext[1000000];
 int yyleng;
+int yylval;
 int yylex();
 char input(); // NOTE: defined in driver program (such as y.tab.c)
 void unput(char); // NOTE: defined in driver program (such as y.tab.c)

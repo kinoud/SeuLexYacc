@@ -2,25 +2,25 @@ import FA as fam
 import regexparser as rx
 from symbolpool import so
 import os
+import sys
 
 """
 
 NOTE:
 at present only support a subset of lex grammer:
 not support (including but not limited to):
-1. "<literal>"      so, use \+ instead of "+"
+[fixed] 1. "<literal>"      so, use \+ instead of "+"
 2. /*...*/ in non-C-code part
 3. A/B (match A with B behind it)
 
 bugs:
-1. '{' or '}' should not appear in lex action part, 
+[fixed] 1. '{' or '}' should not appear in lex action part, 
     why is that? you can check the code of LexReader.readBlock()
 
 """
 
 def init():
     rx.build()
-
 
 class Writer:
     def __init__(self,framefile,outputfile):
@@ -446,9 +446,24 @@ class LexProcessor:
         w.writeDown()
 
 if __name__=='__main__':
+    if len(sys.argv)==1:
+        print('please declare .l file')
+        quit()
+    outdir='.'
+    lexfile=sys.argv[1]
+    assert os.path.isfile(lexfile),'.l file not exists!'
+    if len(sys.argv)>2:
+        outdir=sys.argv[2]
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    outfile=os.path.join(outdir,'lex.yy.c')
+
+    samedir=os.path.dirname(__file__)
+    framefile=os.path.join(samedir,'lexyyframe.c')
+
     init()
-    reader=LexReader('c99.l')
-    writer=LexWriter('lexyyframe.c','lex.yy.c')
+    reader=LexReader(lexfile)
+    writer=LexWriter(framefile,outfile)
     lp=LexProcessor(reader,writer)
     while lp.step():
         pass

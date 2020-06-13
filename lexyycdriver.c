@@ -1,6 +1,5 @@
-int yylval;
-
 #include "lex.yy.c"
+
 
 FILE *_fp;
 
