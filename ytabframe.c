@@ -11,8 +11,10 @@
  *******************************/
 $$$
 
+#define MAX_RHS_IN_ONE_PROD 100
+#define MAX_TOKEN_CNT 1000000
 
-int **_ch_val[100];
+int **_ch_val[MAX_RHS_IN_ONE_PROD];
 int _ch_num;
 int _pa_val;
 
@@ -33,14 +35,14 @@ $$$
 
 
 //<500 productions
-void (*_action_of_p[500])();
+void (*_action_of_p[_LR_PROD_CNT])();
 
 //<5000 states <500 symbols
 //-1 for invalid
-int _shift[5000][1000];//shift to
-int _reduce[5000][1000];//reduce production
-int _rdc_len[5000][1000];//reduce len
-int _rdc_to[5000][1000];//reduce to
+int _shift[_LR_STATE_CNT][_LR_SYMBOL_CNT];//shift to
+int _reduce[_LR_STATE_CNT][_LR_SYMBOL_CNT];//reduce production
+int _rdc_len[_LR_STATE_CNT][_LR_SYMBOL_CNT];//reduce len
+int _rdc_to[_LR_STATE_CNT][_LR_SYMBOL_CNT];//reduce to
 
 struct LALRNode{
     int syb;
@@ -49,9 +51,9 @@ struct LALRNode{
 
 typedef struct LALRNode LNode;
 
-LNode _symbol_stack[1000000];
+LNode _symbol_stack[MAX_TOKEN_CNT];
 int _sb_top=0;
-int _state_stack[1000000],_st_top=0;
+int _state_stack[MAX_TOKEN_CNT],_st_top=0;
 
 struct TreeNode{
     int syb;
@@ -60,12 +62,12 @@ struct TreeNode{
 
 typedef struct TreeNode TNode;
 
-TNode _tree_node[1000000];
+TNode _tree_node[MAX_TOKEN_CNT];
 int _node_cnt,_tree_root;
 int _edge_cnt;
-int _edge_head[1000000];
-int _edge_next[1000000];
-int _edge_to[1000000];
+int _edge_head[MAX_TOKEN_CNT];
+int _edge_next[MAX_TOKEN_CNT];
+int _edge_to[MAX_TOKEN_CNT];
 
 void _add_shift(int i,int j,int x){
     _shift[i][x]=j;
@@ -96,8 +98,8 @@ $$$
 
 }
 
-const int _inq_size=1000000;
-LNode _inq[1000000+5];
+const int _inq_size=MAX_TOKEN_CNT;
+LNode _inq[MAX_TOKEN_CNT+5];
 int _inq_f,_inq_r;//[f,r) front rear
 
 void _inq_clear(){
