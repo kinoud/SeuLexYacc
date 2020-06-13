@@ -140,7 +140,10 @@ class YaccProcessor:
                         res+='(*(%s*)(*(_ch_val[0])))'%self.action_type_of_s.get(p.lhs)
                     else:
                         assert x.isdigit()
-                        res+='(*(%s*)(*(_ch_val[%s])))'%(self.action_type_of_s.get(p[int(x)-1]),x)
+                        type_str=self.action_type_of_s.get(p[int(x)-1])
+                        if type_str is None:
+                            type_str="int"
+                        res+='(*(%s*)(*(_ch_val[%s])))'%(type_str,x)
                     flag=False
                 elif x=='$':
                     flag=True

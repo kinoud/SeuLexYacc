@@ -3,8 +3,6 @@ from FA import FA
 import FA as fam
 from symbolpool import so
 from collections import deque
-from nltk.tree import Tree
-from nltk.draw.tree import draw_trees
 
 
 """
@@ -20,6 +18,15 @@ rx.step()
 rx.draw()
 
 """
+
+class TreeNode(list):
+    def __init__(self, label, children: list):
+        assert children is not None, 'children of TreeNode is None'
+        list.__init__(self, children)
+        self._label = label
+    
+    def label(self):
+        return self._label
 
 _nfa_of_term={}
 def add_nfa(name:str,nfa:FA):
@@ -276,7 +283,7 @@ class Node:
 
 cur=None # current state id
 symbol_stack=[]
-t_symbol_stack=[] # stack of Tree
+t_symbol_stack=[] # stack of TreeNode
 state_stack=[] # stack of state IDs
 inq=deque()
 t_inq=deque()
@@ -304,7 +311,7 @@ def pushsyb(s,raw=True):
         print('%s is not a terminal')
         return
     inq.append(s)
-    t_inq.append(Tree(Node(s),[s]))
+    t_inq.append(TreeNode(Node(s),[s]))
 
 def pusheos():
     pushsyb(eos,False)
@@ -326,7 +333,17 @@ def show_stacks(showstate=True):
 
 def draw(i=0):
     t=t_inq[i] if i>=0 else t_symbol_stack[i]
-    draw_trees(t)
+    from nltk.tree import Tree
+    from nltk.draw.tree import draw_trees
+    def dfsGenTree(node):
+        if not isinstance(node,TreeNode):
+            return node
+        l=[]
+        for i in node:
+            l.append(dfsGenTree(i))
+        return Tree(node.label(),l)
+    
+    draw_trees(dfsGenTree(t))
 
 def parse():
     while step():
@@ -367,7 +384,7 @@ def step():
         reduce_len = rinfo['reduce_len']
         reduce_to = rinfo['reduce_to']
 
-        t_pa=Tree(Node(reduce_to),[])
+        t_pa=TreeNode(Node(reduce_to),[])
         
         for _ in range(reduce_len):
             symbol_stack.pop()
