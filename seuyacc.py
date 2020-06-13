@@ -42,7 +42,7 @@ class YaccWriter(Writer):
         self.user_part[3]+=s
 
 class YaccProcessor:
-    def __init__(self,reader:YaccReader,writer:YaccWriter,generateTokenH:str='',nonTerminalStartID:int=0):
+    def __init__(self,reader:YaccReader,writer:YaccWriter,generateTokenH:str='',nonTerminalStartID:int=0,enableDebugPrint:bool=False,drawTreeCode:str=''):
         self.writer=writer
         self.reader=reader
         self.generateTokenH=generateTokenH
@@ -54,6 +54,8 @@ class YaccProcessor:
         self._priority=0
         self._pri_of={}
         self._id_of_nonter={}
+        self.enenableDebugPrint=enableDebugPrint
+        self.drawTreeCode=drawTreeCode
         self.current_type='int'
         # non terminal symbol id start from base
         # so, all token id user defined should < base
@@ -121,6 +123,11 @@ class YaccProcessor:
     
     def genYtabc(self):
         w=self.writer
+        if self.enenableDebugPrint:
+            w.writeToHeaders('\n#define _YACC_DBG_PRT\n')
+        if len(self.drawTreeCode)>0:
+            w.writeToHeaders('\n#define _YACC_DRAW_PY_CODE "%s"\n'%self.drawTreeCode)
+        
         max_prod=0
         for p in lr.ppool:
             id=p.id
@@ -344,6 +351,8 @@ if __name__=='__main__':
     generateTokenH=False
     passCnt=0
     nonTerminalStartID=0
+    drawTreeCode=''
+    enableDebugPrint=False
     for i in range(len(sys.argv)):
         if passCnt>0:
             passCnt-=1
@@ -358,6 +367,13 @@ if __name__=='__main__':
                 elif v=='-s' or v=='--nonterminal-start-id':
                     nonTerminalStartID=int(sys.argv[i+1])
                     passCnt+=1
+                elif v=='-g' or v=='--generate-draw-tree-code':
+                    drawTreeCode=sys.argv[i+1]
+                    passCnt+=1
+                elif v=='-d' or v=='--debug-print':
+                    enableDebugPrint=True
+                else:
+                    assert False,'Unknown argument'
             elif argvState==1:
                 argvState=2
                 yaccfile=v
@@ -383,7 +399,7 @@ if __name__=='__main__':
     framefile=os.path.join(samedir,'ytabframe.c')
     reader=YaccReader(yaccfile)
     writer=YaccWriter(framefile,outfile)
-    yp=YaccProcessor(reader,writer,os.path.join(outdir,'y.tab.h') if generateTokenH else '',nonTerminalStartID)
+    yp=YaccProcessor(reader,writer,os.path.join(outdir,'y.tab.h') if generateTokenH else '',nonTerminalStartID,enableDebugPrint,drawTreeCode)
     while yp.step():
         pass
     
