@@ -866,6 +866,8 @@ pip install nltk -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 回车后，等待下载安装完成即可。
 
+nltk 库并不是必须的，只有在需要画树的情况下才需要被安装。
+
 ### 4.2 SeuLexYacc的使用方法
 
 首先，你需要激活虚拟环境`(seulexyacc)`并成功安装`nltk`包，然后在命令行界面进入`SeuLexYacc`文件夹。
@@ -886,11 +888,15 @@ python seulex.py c99.l minic
 
 为了单独测试`lex.yy.c`文件，我们将位于`SeuLexYacc`文件夹下的`lexyycdriver`文件复制粘贴到`minic`文件夹下。同时我们也将被测程序文件`in.c`从`SeuLexYacc`文件夹下复制到`minic`文件夹下。
 
-此时，`minic`文件夹下应当包括三个文件：
+此时，`minic`文件夹下应当包括5个文件：
 
 1. `lex.yy.c`
-2. `lexyycdriver.c`
-3. `in.c`
+2. `lex.yy.h`
+3. `lexyycdriver.c`
+4. `in.c`
+5. `y.tab.h`
+
+其中`y.tab.h`是在下一节中可以用seuyacc生成的所有Token对应的ID定义。你也可以自己编写这个文件来任意指定ID，只要ID超过255即可。
 
 然后，我们编译`lexyycdriver.c`。在`minic`文件夹下打开命令行窗口，键入命令：
 
@@ -923,12 +929,14 @@ python seuyacc.py -h c99.y minic
 
 键入回车，等待运行完毕。然后你将会在`minic`文件夹中看到`y.tab.c`文件。
 
-此时，你的`minic`文件夹下应当至少包含以下3个文件：
+此时，你的`minic`文件夹下应当至少包含以下6个文件：
 
 1. `lex.yy.c`
-2. `lexyycdriver.c`
-3. `in.c`
-4. `y.tab.c`
+2. `lex.yy.h`
+3. `lexyycdriver.c`
+4. `in.c`
+5. `y.tab.c`
+6. `y.tab.h`
 
 键入下面的命令编译`y.tab.c`：
 
