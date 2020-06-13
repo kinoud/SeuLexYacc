@@ -121,6 +121,7 @@ class YaccProcessor:
     
     def genYtabc(self):
         w=self.writer
+        max_prod=0
         for p in lr.ppool:
             id=p.id
             act=self.action_of_p.get(p)
@@ -155,10 +156,14 @@ class YaccProcessor:
             res='void %s(){\n(*(_ch_val[0]))=(int*)malloc(sizeof(%s));\n%s\n}\n'%(fn_name,self.action_type_of_s.get(p.lhs),res)
             w.writeToActions(res)
             w.writeToLALR('_action_of_p[%d]=%s;\n'%(id,fn_name))
+            max_prod=max(max_prod,id)
 
+        w.writeToHeaders('\n#define _LR_PROD_CNT %d\n'%(max_prod+1))
         count=0
+        max_state=0
         for i,x,a,t in lr.actions():
             assert t in 'sr'
+            max_state=max(max_state,i)
             x=str(self.getYaccId(x))
             if t=='s':
                 j=a
@@ -172,6 +177,9 @@ class YaccProcessor:
             if count%3==0:
                 w.writeToLALR('\n')
         w.writeToLALR('\n')
+        w.writeToHeaders('\n#define _LR_STATE_CNT %d\n'%(max_state+1))
+        w.writeToHeaders('#define _LR_SYMBOL_CNT %d\n'%(len(self._id_of_nonter)+self._id_of_nonter_base))
+        
         
 
         name_of={}
@@ -183,16 +191,18 @@ class YaccProcessor:
                 if self.getYaccId(syb)<0:
                     continue
             name_of[self.getYaccId(syb)]='"'+str(syb)+'"'
-        name_str='int _name_of[1000];\nchar _name_str[1000][50]={\n'
+        name_str=''
         count=0
+        max_len=0
         for i,(id,name) in enumerate(name_of.items()):
             if i>0:name_str+=',\n'
             name_str+=name
+            max_len=max(max_len,len(name))
             w.writeToLALR('_name_of[%s]=%d;'%(id,i))
             count+=1
             if count%4==0:
                 w.writeToLALR('\n')
-        name_str+='\n};'
+        name_str=('int _name_of[%d];\nchar _name_str[%d][%d]={\n'%(count,count,max_len+1))+name_str+'\n};'
         # print(name_str)
         w.writeToHeaders(name_str)
 

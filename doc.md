@@ -682,27 +682,27 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 下面介绍这个模板文件中包含的部分全局变量和方法。
 
-- `int *_ch_val[100],_ch_num;`
+- `int *_ch_val[MAX_RHS_IN_ONE_PROD],_ch_num;`
 
   产生式匹配动作的内部实现相关变量。`_ch_num`是当前归约成功的产生式右部的符号个数，`_ch_val[0]`是一个指针，指向当前归约成功的产生式左部符号的属性值，`_ch_val[1]`到`_ch_val[_ch_num]`分别指向当前归约成功产生式右部每个符号的属性值。
 
-- `void (*_action_of_p[500])();`
+- `void (*_action_of_p[_LR_PROD_CNT])();`
 
   函数指针数组，储存了所有产生式的归约动作函数。
 
-- `int _shift[5000][1000];`
+- `int _shift[_LR_STATE_CNT][_LR_SYMBOL_CNT];`
 
   shift信息。第一个下标是状态编号，第二个下标是下一个符号的ID。其值为转移到的新状态的编号，若无法转移，值为-1。
 
-- `int _reduce[5000][1000];`
+- `int _reduce[_LR_STATE_CNT][_LR_SYMBOL_CNT];`
 
   reduce信息。下标含义同上。其值为归约产生式的编号，若无法归约，值为-1。
 
-- `int _rdc_len[5000][1000];`
+- `int _rdc_len[_LR_STATE_CNT][_LR_SYMBOL_CNT];`
 
   归约产生式右部的长度。下标含义同上。
 
-- `int _rdc_to[5000][1000];`
+- `int _rdc_to[_LR_STATE_CNT][_LR_SYMBOL_CNT];`
 
   归约产生式左部符号的ID。下标含义同上。
 
@@ -717,7 +717,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   出入符号栈的数据结构。它相比一个符号ID本身，仅仅多了一个`tree_id`属性，此值是该符号在语法树中的唯一节点编号。
 
-- `LALRNode _symbol_stack[1000000];`
+- `LALRNode _symbol_stack[MAX_TOKEN_CNT];`
 
   符号栈。用于LR解析。
 
@@ -725,7 +725,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   符号栈栈顶下标。
 
-- `int _state_stack[1000000],_st_top=0;`
+- `int _state_stack[MAX_TOKEN_CNT],_st_top=0;`
 
   状态栈以及状态栈栈顶下标。
 
@@ -740,7 +740,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   语法树节点的数据结构。它包含一个符号ID（`syb`）以及该语法树节点的属性值`val`。
 
-- `TreeNode _tree_node[1000000];`
+- `TreeNode _tree_node[MAX_TOKEN_CNT];`
 
   存储了语法树的所有节点。
 
@@ -748,7 +748,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   语法树的节点总数以及根节点编号。
 
-- `int _edge_cnt,_edge_head[1000000],_edge_next[1000000],_edge_to[1000000];`
+- `int _edge_cnt,_edge_head[MAX_TOKEN_CNT],_edge_next[MAX_TOKEN_CNT],_edge_to[MAX_TOKEN_CNT];`
 
   语法树的边数目以及用存储这些边的邻接表数据结构。
 
@@ -770,7 +770,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
   action_of_p[x]=...;
   ```
 
-- `LALRNode _inq[1000005];`
+- `LALRNode _inq[MAX_TOKEN_CNT + 5];`
 
   输入队列。用于LR解析过程。
 
