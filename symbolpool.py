@@ -3,7 +3,7 @@ class Symbol:
     def __init__(self,id,terminal=True,terminal_id=None):
         """
         id: str, every symbol has a unique str id
-        terminal_id: int, every terminal has int id, used in lexer or yacc(maybe)
+        terminal_id: int, every terminal has int id, used in lexer
         """
         self.id=id
         self.terminal=terminal

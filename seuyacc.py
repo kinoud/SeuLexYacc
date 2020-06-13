@@ -1,6 +1,8 @@
 from seulex import LexReader,Writer
 from symbolpool import so,Symbol
 import LALR as lr
+import os
+import sys
 
 
 """
@@ -100,11 +102,14 @@ class YaccProcessor:
             syb=so.getSymbol(r,terminal=terminal,autocreate=True)
             self.assignYaccId(syb)
             R.append(syb)
-        if pri is None:
-            for r in R:
-                if self._pri_of.get(r) is not None:
-                    pri=self._pri_of[r]
         
+        if pri is None:
+            rightmost_ter=None
+            for r in R:
+                if r.isTerminal():
+                    rightmost_ter=r
+            pri=self._pri_of.get(rightmost_ter)
+
         p=lr.addProduction(L,R,pri)
         if action is not None:
             self.action_of_p[p]=action
@@ -278,8 +283,23 @@ class YaccProcessor:
 
 
 if __name__=='__main__':
-    reader=YaccReader('c99.y')
-    writer=YaccWriter('ytabframe.c','y.tab.c')
+    if len(sys.argv)==1:
+        print('please declare .y file')
+        quit()
+    outdir='.'
+    yaccfile=sys.argv[1]
+    assert os.path.isfile(yaccfile),'.y file not exists!'
+    if len(sys.argv)>2:
+        outdir=sys.argv[2]
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    outfile=os.path.join(outdir,'y.tab.c')
+
+    samedir=os.path.dirname(__file__)
+    framefile=os.path.join(samedir,'ytabframe.c')
+
+    reader=YaccReader(yaccfile)
+    writer=YaccWriter(framefile,outfile)
     yp=YaccProcessor(reader,writer)
     while yp.step():
         pass

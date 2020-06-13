@@ -8,11 +8,6 @@ from nltk.draw.tree import draw_trees
 
 
 """
-NOTE:
-only supports a subset of lex-regex grammer.
-not support:
-"<literals>"    so, use \+ instead of "+"
-
 import regexparser as rx
 
 rx.build()

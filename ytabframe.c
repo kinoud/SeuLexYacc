@@ -10,7 +10,6 @@
 $$$
 
 
-int yylval;
 int *_ch_val[100];
 int _ch_num;
 int _pa_val;
@@ -61,7 +60,7 @@ typedef struct TreeNode TNode;
 
 TNode _tree_node[1000000];
 int _node_cnt,_tree_root;
-int _tree_edge[1000000],_edge_cnt;
+int _edge_cnt;
 int _edge_head[1000000];
 int _edge_next[1000000];
 int _edge_to[1000000];
