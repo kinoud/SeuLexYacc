@@ -36,9 +36,9 @@ $$$
  * dfa things
  ****************************************************/
 int _n,_start_node,_cur;
-int _to[5000][256];
-int _accept[5000];
-int (*_action_of_node[5000])(); // actions are functions that return token id (int)
+int _to[_DFA_NODE_CNT][256];
+int _accept[_DFA_NODE_CNT];
+int (*_action_of_node[_DFA_NODE_CNT])(); // actions are functions that return token id (int)
 
 void _dfa_init(){
     memset(_to,-1,sizeof _to);
