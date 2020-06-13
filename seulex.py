@@ -426,9 +426,11 @@ class LexProcessor:
         dfa=self.final_dfa
         w.writeToDfa('_n=%d;_start_node=%d;\n'%(len(dfa),dfa.special_node['start']))
         count=0
+        max_node_id=0
         for i,j,x in dfa.edges():
             w.writeToDfa('_dfa_set_edge(%d,%d,%d); '%(i,j,x.getLexyycId()))
             count+=1
+            max_node_id=max(max_node_id,i)
             if count%3==0:w.writeToDfa('\n')
         
         for rule_id,ccode in self.ccode_of_rule.items():
@@ -441,8 +443,10 @@ class LexProcessor:
                 rule_id=dfa.getNodeInfo(u)['rule']
                 fn_name='_lex_action_%d'%rule_id
                 w.writeToDfa('_dfa_set_action(%d,%s); '%(u,fn_name))
+                max_node_id=max(max_node_id,u)
                 count+=1
                 if count%3==0:w.writeToDfa('\n')
+        w.writeToHeaders('\n#define _DFA_NODE_CNT %d\n'%(max_node_id+1))
         w.writeDown()
 
 if __name__=='__main__':
