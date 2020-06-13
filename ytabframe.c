@@ -185,12 +185,14 @@ void _dfs_clean(int u){
     free(tu.val);
 }
 
+FILE* DrawHandle;
+
 void _dfs(int u){
     TNode tu=_tree_node[u];
     int h=_edge_head[u];
 	int first_node=1;
     if(h==-1){
-		printf("tree_node_%d=\"%s\"\n",u,tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
+		fprintf(DrawHandle,"tree_node_%d=\"%s\"\n",u,tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
         return;
     }
     while(1){
@@ -198,15 +200,15 @@ void _dfs(int u){
         h=_edge_next[h];
         if(h==-1)break;
     }
-	printf("tree_node_%d=Tree(\"%s\",[",u,tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
+	fprintf(DrawHandle,"tree_node_%d=Tree(\"%s\",[",u,tu.syb!=-2?_name_str[_name_of[tu.syb]]:"<start>");
 	h=_edge_head[u];
 	while(1){
-		if(first_node)first_node=0;else putchar(',');
-		printf("tree_node_%d",_edge_to[h]);
+		if(first_node)first_node=0;else fprintf(DrawHandle,",");
+		fprintf(DrawHandle,"tree_node_%d",_edge_to[h]);
         h=_edge_next[h];
         if(h==-1)break;
     }
-	puts("])");
+	fputs("])\n",DrawHandle);
 }
 
 
@@ -234,23 +236,32 @@ int _step(){
         return 1; //omit
     }
     if(syb==-2){
+#ifdef _YACC_DBG_PRT
         puts("yacc work is done");
         puts("\nfinal stacks:");
         _print();
+#endif
         _tree_root=nxt.tree_id;
         //printf("root = %d\n",nxt.tree_id);
-        puts("\ngrammer tree draw code:");
-		puts("from nltk.tree import Tree\nfrom nltk.draw.tree import draw_trees\n");
+#ifdef _YACC_DRAW_PY_CODE
+        DrawHandle=fopen(_YACC_DRAW_PY_CODE, "w");
+		fputs("from nltk.tree import Tree\nfrom nltk.draw.tree import draw_trees\n\n",DrawHandle);
         _dfs(_tree_root);
-		printf("draw_trees(tree_node_%d)\n",_tree_root);
-        puts("");
+		fprintf(DrawHandle,"draw_trees(tree_node_%d)\n",_tree_root);
+        fclose(DrawHandle);
+#ifdef _YACC_DBG_PRT
+        puts("grammer tree draw code generated!");
+#endif
+#endif
         return 0;
     }
 
     int s=_shift[cur][syb];
     int r=_reduce[cur][syb];
     if(s==-1&&r==-1){
+#ifdef _YACC_DBG_PRT
         puts("error: cannot shift nor reduce");
+#endif
         return 0;
     }
 
@@ -313,5 +324,7 @@ int main(int argc,char** argv){
     _ytab_init();
     while(_step());
     _dfs_clean(_tree_root);
+#ifdef _YACC_DBG_PRT
     puts("\nparsing done, please check the results");
+#endif
 }

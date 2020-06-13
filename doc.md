@@ -910,6 +910,12 @@ python seulex.py c99.l minic
 gcc lex.yy.c lexyycdriver.c -o lexyycdriver
 ```
 
+如果想要输出`lex.yy.c`提供的调试信息，请加上 `-D_LEX_DBG_PRT`，即命令为：
+
+```bash
+gcc lex.yy.c lexyycdriver.c -o lexyycdriver -D_LEX_DBG_PRT
+```
+
 编译结束后，使用下面命令对`in.c`进行词法分析：
 
 ```bash
@@ -925,13 +931,15 @@ seuyacc的使用应当紧跟在seulex之后，我们假设你已经在`minic`文
 键入下列命令以运行`seuyacc.py`脚本：
 
 ```bash
-python seuyacc.py -h c99.y minic
+python seuyacc.py -h c99.y minic -d -g draw.py
 ```
 
 此脚本首先接收2个参数，第1个参数`c99.y`是Yacc文件的位置，第2个参数`minic`是保存生成结果（`y.tab.c`）的文件夹，如不指定第2个参数，则默认将生成文件保存到当前工作目录下。此外，这个脚本还接受以下可选参数：
 
 `-h` 或者 `--auto-gen-h` 表示会生成一个 `y.tab.h` 的文件，里面自动定义了每个Token的ID(可以给Lex也可以给Yacc引用)。
 `-s` 或者 `--nonterminal-start-id` 表示非终结符从接下来一个参数(整数值)开始编号，这个数值应当大于Token ID的最大值。使用`-h`自动分配Token ID时，这个值会自动编号，不需要指定。
+`-d` 或者 `--debug-print` 表示生成的`y.tab.c`文件会在解析文件时输出调试信息
+`-g` 或者 `--generate-draw-tree-code` 表示生成的`y.tab.c`文件会在解析文件完成后输出一个Python文件，这个文件包含语法树绘制代码，这个文件的文件名是下一个参数(字符串)。
 
 键入回车，等待运行完毕。然后你将会在`minic`文件夹中看到`y.tab.c`文件。
 
@@ -965,14 +973,15 @@ yacc work is done
 final stacks:
 [ ] <=== [ -2 0 ] <=== yylex()
 [ 0  ]
-
-grammer tree draw code:
-(...)
 ```
 
-其中省略号省略的部分是`python`语言写成的语法树定义。
+同时生成了`draw.py`是`python`语言写成的语法树定义。
 
-为了将这棵语法树画出来，在`python`命令行中（请先确保你已经激活了`(seulexyacc)`虚拟环境）键入上述省略号所代表的全部代码。
+为了将这棵语法树画出来，在键入：
+
+```bash
+python draw.py
+```
 
 敲击回车后，将会弹出一个窗口，语法树被绘制在其中。
 
