@@ -558,7 +558,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   - `addToken(word_list:list[str])`
 
-    Token是指在`.y`文件中以`%token`标记的标识符，这些标识符将被当作终结符来处理。`word_list`是一个字符串列表，每个字符串是一个在`.y`文件中以`%token`标记的标识符。
+    Token是指在`.y`文件中以`%token`标记的标识符，这些标识符将被当作终结符来处理。`word_list`是一个字符串列表，每个字符串是一个在`.y`文件中以`%token`标记的标识符。同时把当前最后一次`%type`的类型(没有`%type`默认为`int`)与这些`word`关联。
 
   - `declAssociation(word_list:list[str],associ:str)`
 
@@ -600,9 +600,9 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 **对用户开放的变量和方法：**
 
-- `char yytext[1000000]; int yyleng; int yylval;`
+- `char yytext[MAX_TOKEN_SIZE]; int yyleng; int yylval;int*yyaval;`
 
-  词法分析器匹配成功的字符串，`yytext`中存储了字符串的内容，`yyleng`是它的长度，`yylval`是它的属性值，此值应当由用户在匹配动作中赋值。
+  词法分析器匹配成功的字符串，`yytext`中存储了字符串的内容，`yyleng`是它的长度。`lexyycdriver.c`中`yylval`是它的属性值，此值应当由用户在匹配动作中赋值。YACC中如果为`yyaval`是由`malloc`申请的指向任意类型的属性值的指针，此值也应当由用户在匹配动作中赋值。如果用户没有给`yyaval`赋值，那么默认`yylval`是它的属性值，属性值类型是`int`。注意类型要与YACC中写的匹配。
 
 - `int yylex();`
 
@@ -913,10 +913,13 @@ seuyacc的使用应当紧跟在seulex之后，我们假设你已经在`minic`文
 键入下列命令以运行`seuyacc.py`脚本：
 
 ```bash
-python seuyacc.py c99.y minic
+python seuyacc.py -h c99.y minic
 ```
 
-此脚本接收2个参数，第1个参数`c99.y`是Yacc文件的位置，第2个参数`minic`是保存生成结果（`y.tab.c`）的文件夹，如不指定，则默认将生成文件保存到当前工作目录下。
+此脚本首先接收2个参数，第1个参数`c99.y`是Yacc文件的位置，第2个参数`minic`是保存生成结果（`y.tab.c`）的文件夹，如不指定第2个参数，则默认将生成文件保存到当前工作目录下。此外，这个脚本还接受以下可选参数：
+
+`-h` 或者 `--auto-gen-h` 表示会生成一个 `y.tab.h` 的文件，里面自动定义了每个Token的ID(可以给Lex也可以给Yacc引用)。
+`-s` 或者 `--nonterminal-start-id` 表示非终结符从接下来一个参数(整数值)开始编号，这个数值应当大于Token ID的最大值。使用`-h`自动分配Token ID时，这个值会自动编号，不需要指定。
 
 键入回车，等待运行完毕。然后你将会在`minic`文件夹中看到`y.tab.c`文件。
 
@@ -958,6 +961,8 @@ grammer tree draw code:
 为了将这棵语法树画出来，在`python`命令行中（请先确保你已经激活了`(seulexyacc)`虚拟环境）键入上述省略号所代表的全部代码。
 
 敲击回车后，将会弹出一个窗口，语法树被绘制在其中。
+
+在 Yacc 文件中，除了`%left`,`%right`,`%start`,`%token`,`%prec`外，还支持`%type TYPE_NAME`。它可以在META段可以在产生式段使用，每个Token或者产生式所对应的类型都是它之前最近一个`%type`指定的，如果之前没有`%type`则默认类型是`int`。
 
 ## 5 测试用例与结果分析
 
