@@ -462,10 +462,11 @@ if __name__=='__main__':
         os.makedirs(outdir)
     outfile=os.path.join(outdir,'lex.yy.c')
 
-    with open('lexyyframe.h','r') as inf,open(os.path.join(outdir,'lex.yy.h'),'w') as outf:
+    samedir=os.path.dirname(__file__)
+
+    with open(os.path.join(samedir,'lexyyframe.h'),'r') as inf,open(os.path.join(outdir,'lex.yy.h'),'w') as outf:
         outf.write(inf.read())
 
-    samedir=os.path.dirname(__file__)
     framefile=os.path.join(samedir,'lexyyframe.c')
 
     init()
