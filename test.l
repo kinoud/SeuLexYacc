@@ -5,10 +5,10 @@
 
 delim       [ \t]
 ws          {delim}+
-letter      [A-Za-z]
-digit       [0-9]
+letter      [\101-\132a-z]
+digit       [\x30-\x39]
 id          {letter}({letter}|{digit})*
-number      {digit}+(\.{digit}+)?((E|e)[+-]?{digit}+)?
+number      {digit}+(\.{digit}+)?((\x65|"\105")[+-]?{digit}+)?
 
 %% 
 

@@ -46,7 +46,7 @@
     <tr>
         <td>09017124</td>
         <td>韩数</td>
-        <td></td>
+        <td>添加自动标号Token；添加不同类型的属性值支持；修复一些bug和移去不必要依赖；以及为实现一些其他功能所作的seulex、regexparser、seuyacc模块的改进；报告5.3节的编写，以及其他涉及我的工作的部分的报告。</td>
         <td></td>
     </tr>
 </table>
@@ -81,7 +81,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
   - `()`定义优先级。
   - `{}`中的标识符表示先前定义的正则表达式。
   - `""`之间的内容被当作普通字符。
-  - `\`表示转义。
+  - `\`表示转义。支持`\xXX`或`\XXX`表示16进制或8进制的`char`对应编码。
 
 - 正则表达式解析器是通过LALR方法由程序构建的，因此，扩展正则表达式的语法相对容易。
 
@@ -104,6 +104,8 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 - 支持`.y`文件中给产生式绑定动作，可以使用`$$`和`$x`获取与符号绑定的变量值，此变量值可以通过`%type`指定其类型。
 
 - 支持`.l`文件中给词法规则绑定动作，每个动作需要以返回一个整型值（Token类型编号）结尾。
+
+- Token类型编号可以根据`.y`文件自动生成并保存在`y.tab.h`中，供其他部分使用。
 
 - 由seulex生成的`lex.yy.c`需要与由seuyacc生成的`y.tab.c`共同编译，也可以通过本报告中提供的`lexyycdriver.c`与`lex.yy.c`共同编译从而单独使用词法分析器。
 
@@ -2287,6 +2289,107 @@ token 125 [}]         yylval=-1
 
 ![结构体语法树4](img\结构体语法树4.png)
 
+# 5.3 转义字符与任意结构Lex结果测试
+
+我们使用 `.l` 文件如下：
+
+```lex
+%{
+#include <stdlib.h>
+#include "test.h"
+%}
+
+delim       [ \t]
+ws          {delim}+
+letter      [\101-\132a-z]
+digit       [\x30-\x39]
+id          {letter}({letter}|{digit})*
+number      {digit}+(\.{digit}+)?((\x65|"\105")[+-]?{digit}+)?
+
+%% 
+
+{ws}        {return OMIT;}
+{id}        {return ID;}
+{number}    {yylval=atoi(yytext);return NUMBER;}
+{digit}`@{digit} {
+yyaval=(int*)malloc(sizeof(Magic));
+((Magic*)yyaval)->x=0x30^yytext[0];
+((Magic*)yyaval)->y=0x30^yytext[3];
+return MAGIC;
+}
+\+           {return '+';}
+-           {return '-';}
+\*           {return '*';}
+/           {return '/';}
+\(           {return '(';}
+\)           {return ')';}
+\n           {return '\n';}
+
+%%
+
+int installID() {
+    /* to do */
+}
+
+int installNum(){
+    /* to do */
+}
+```
+
+`yacc`文件如下：
+
+```yacc
+%{
+//some .y headers
+#include "test.h"
+%}
+%token NUMBER ID
+%type Magic
+%token MAGIC
+
+%left '+' '-'
+%left '*' '/'
+%right UMINUS
+%start lines
+
+%%
+%type int
+lines   : lines expr '\n'   {printf("ans=%d\n",$2);}
+        | lines '\n' 
+        |                
+        ;
+expr    : expr '+' expr     {$$=$1+$3;}
+        | expr '-' expr     {$$=$1-$3;}
+        | expr '*' expr     {$$=$1*$3;}  
+        | expr '/' expr     {$$=$1/$3;}
+        | '(' expr ')'      {$$=$2;}
+        | '-' expr %prec UMINUS {$$=-$2;}
+        | NUMBER   
+        | MAGIC      {$$=$1.x;printf("Magic:%d\n",$1.y);}
+        ;
+%%
+```
+
+额外的头文件：
+
+```plain
+typedef struct _Magic {
+	int x;
+	int y;
+} Magic;
+```
+
+可以看到 MAGIC 类型的特殊终结符的处理和`\101`/`\x65`这样的转移字符处理。
+
+输出结果为：
+
+```plain
+ans=-200
+Magic:3
+ans=7
+```
+
+可以看到正确处理了 Magic，正确读取了数字。
 
 
 ## 6 课程设计总结
@@ -2302,7 +2405,7 @@ token 125 [}]         yylval=-1
 - Yacc的错误恢复机制。我们并没有编写相关代码，但是无论从原理上还是技术上这都并不困难。
 - Yacc中的冲突检测报告。我们虽然可以对冲突行为进行自定义的或默认的选择，但是并未生成报告信息，这对于使用者来说是不友好的。
 - 一些细节上的处理并不优雅。例如我们规定单个TOKEN的最大长度为`500000`，产生式右侧最多`100`个符号，Yacc的输入最多有`1000000`个TOKEN，尽管这些范围都是可以修改的，但是仍然会给用户带来不友好的体验。
-- Lex的输入不支持非ASCII字符。例如中文等。
+- Lex的输入不支持非ASCII字符。例如中文等，只能通过多个`\x十六进制`/`\八进制`去模拟。
 
 ## 7 教师评语
 
