@@ -133,7 +133,8 @@ class YaccProcessor:
             id=p.id
             act=self.action_of_p.get(p)
             if act is None and len(p)>0:
-                act='$$=$1;'
+                if self.action_type_of_s.get(p.lhs)==self.action_type_of_s.get(p[0]):
+                    act='$$=$1;'
             if act is None:
                 act=''
             # $$ -> (*_ch_val[0])

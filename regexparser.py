@@ -221,6 +221,10 @@ def define_actions():
         elif c=='f':
             a['ch']=so.getSymbol('\f',autocreate=True)
     
+    @REGISTER_ACTION(22)
+    def char__forse_as_is_symbol(a,a_ch):
+        a['ch']=a_ch[1]['syb']
+    
 def build():
 
     global eps,eos
@@ -257,6 +261,8 @@ def build():
     bind_action(lr.addProduction(so.getSymbol('char',terminal=False,autocreate=True),[so.getSymbol('\\',True,True),so.getSymbol('`',True,True)]),21) # cannot use adp to add `
     for c in _regex_normalchar+_regex_metachar+_regex_specialchar:
         bind_action(lr.adp('`char',     ['\\',c]),                  21)
+    for c in range(0,256):
+        bind_action(lr.addProduction(so.getSymbol('char',terminal=False,autocreate=True),[so.getSymbol('\x08',True,True),so.getSymbol(chr(c),True,True)]),22) # cannot use adp to add `
     for c in _regex_metachar: 
         bind_action(lr.adp('`metachar', [c]),                       19)
 

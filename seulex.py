@@ -152,9 +152,12 @@ class LexReader:
         p=self._p
         s=self._buffer
         assert p<len(s),'no regex found'
+        hex_chars='0123456789abcdefABCDEF'
+        oct_chars='01234567'
 
         q=p
         ans=''
+        lastTurn=''
         
         cur=0
         while True:
@@ -162,7 +165,8 @@ class LexReader:
             if cur==0:
                 if x=='\\':
                     cur=1
-                    ans+=x
+                    # ans+=x
+                    lastTurn='\\'
                     q+=1
                 elif x=='[':
                     cur=2
@@ -178,12 +182,33 @@ class LexReader:
                     q+=1
             elif cur==1:
                 cur=0
-                ans+=x
-                q+=1
+                lastTurn=''
+                print((s[q]=='x' or s[q]=='X'),s[q+1] in hex_chars,s[q],s[q+1])
+                if q+1<len(s) and (s[q]=='x' or s[q]=='X') and s[q+1] in hex_chars:
+                    val=s[q+1]
+                    q+=2
+                    while q<len(s) and s[q] in hex_chars and len(val)<2:
+                        val+=s[q]
+                        q+=1
+                    ans+='\x08'+chr(int(val,16))
+                elif s[q] in oct_chars:
+                    val=s[q]
+                    q+=1
+                    while q<len(s) and s[q] in oct_chars and len(val)<3:
+                        val+=s[q]
+                        q+=1
+                    ans+='\x08'+chr(int(val,8))
+                else:
+                    ans+='\\'+x
+                    q+=1
             elif cur==2:
                 if x==']':
                     cur=0
                     ans+=x
+                    q+=1
+                elif x=='\\':
+                    lastTurn='\\'
+                    cur=5
                     q+=1
                 else:
                     ans+=x
@@ -194,7 +219,8 @@ class LexReader:
                     q+=1
                 elif x=='\\':
                     cur=4
-                    ans+=x
+                    #ans+=x
+                    lastTurn='\\'
                     q+=1
                 else:
                     if x in rx._regex_specialchar+rx._regex_metachar:
@@ -203,9 +229,46 @@ class LexReader:
                     q+=1
             elif cur==4:
                 cur=3
-                ans+=x
-                q+=1
-                
+                lastTurn=''
+                if q+1<len(s) and (s[q]=='x' or s[q]=='X') and s[q+1] in hex_chars:
+                    val=s[q+1]
+                    q+=2
+                    while q<len(s) and s[q] in hex_chars and len(val)<2:
+                        val+=s[q]
+                        q+=1
+                    ans+='\x08'+chr(int(val,16))
+                elif s[q] in oct_chars:
+                    val=s[q]
+                    q+=1
+                    while q<len(s) and s[q] in oct_chars and len(val)<3:
+                        val+=s[q]
+                        q+=1
+                    ans+='\x08'+chr(int(val,8))
+                else:
+                    ans+='\\'+x
+                    q+=1
+            elif cur==5:
+                cur=2
+                lastTurn=''
+                if q+1<len(s) and (s[q]=='x' or s[q]=='X') and s[q+1] in hex_chars:
+                    val=s[q+1]
+                    q+=2
+                    while q<len(s) and s[q] in hex_chars and len(val)<2:
+                        val+=s[q]
+                        q+=1
+                    ans+='\x08'+chr(int(val,16))
+                elif s[q] in oct_chars:
+                    val=s[q]
+                    q+=1
+                    while q<len(s) and s[q] in oct_chars and len(val)<3:
+                        val+=s[q]
+                        q+=1
+                    ans+='\x08'+chr(int(val,8))
+                else:
+                    ans+='\\'+x
+                    q+=1
+        
+        ans+=lastTurn
         self._p=q
         if self.verbo: print('read input: %s'%repr(ans))
         return ans
@@ -450,6 +513,9 @@ class LexProcessor:
         w.writeDown()
 
 if __name__=='__main__':
+    import io
+    import sys
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
     if len(sys.argv)==1:
         print('please declare .l file')
         quit()

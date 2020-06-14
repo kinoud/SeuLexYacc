@@ -495,7 +495,7 @@ def addProduction(lhs:Symbol,rhs:list,priority=None):
         pri='non'
     else: pri='%3d'%priority
 
-    print('LALR: new prod (pri=%s):'%pri,str(p))
+    print('LALR: new prod (pri=%s):'%pri,repr(p))
     return p
 
 def addProductionDone(start:Symbol):
