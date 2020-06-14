@@ -197,7 +197,7 @@ class YaccProcessor:
             else:
                 if self.getYaccId(syb)<0:
                     continue
-            name_of[self.getYaccId(syb)]='"'+str(syb)+'"'
+            name_of[self.getYaccId(syb)]='"'+repr(syb.id)[1:-1]+'"'
         name_str=''
         count=0
         max_len=0
