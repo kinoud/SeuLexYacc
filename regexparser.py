@@ -71,7 +71,7 @@ _regex_metachar='+*?'
 # need escape
 _regex_specialchar='.^$[]()\\|{}'
 # not need escape
-_regex_normalchar='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"\'- =<>%&/!;,:~#'
+_regex_normalchar='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"\'- =<>%&/!;,:~#@'
 
 def dot_chars_but(sybset):
     """
@@ -253,6 +253,8 @@ def build():
     bind_action(lr.adp('`charrange',    ['`char','-','`char']),     3)
     for c in _regex_normalchar:
         bind_action(lr.adp('`char',     [c]),                       19)
+    bind_action(lr.addProduction(so.getSymbol('char',terminal=False,autocreate=True),[so.getSymbol('`',True,True)]),19) # cannot use adp to add `
+    bind_action(lr.addProduction(so.getSymbol('char',terminal=False,autocreate=True),[so.getSymbol('\\',True,True),so.getSymbol('`',True,True)]),21) # cannot use adp to add `
     for c in _regex_normalchar+_regex_metachar+_regex_specialchar:
         bind_action(lr.adp('`char',     ['\\',c]),                  21)
     for c in _regex_metachar: 

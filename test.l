@@ -15,7 +15,7 @@ number      {digit}+(\.{digit}+)?((E|e)[+-]?{digit}+)?
 {ws}        {return OMIT;}
 {id}        {return ID;}
 {number}    {yylval=atoi(yytext);return NUMBER;}
-{digit}--{digit} {
+{digit}`@{digit} {
 yyaval=(int*)malloc(sizeof(Magic));
 ((Magic*)yyaval)->x=0x30^yytext[0];
 ((Magic*)yyaval)->y=0x30^yytext[3];
