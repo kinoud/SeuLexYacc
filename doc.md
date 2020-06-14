@@ -955,7 +955,7 @@ python seuyacc.py -h c99.y minic -d -g draw.py
 键入下面的命令编译`y.tab.c`：
 
 ```bash
-gcc y.tab.c -o y.tab
+gcc lex.yy.c y.tab.c -o y.tab
 ```
 
 编译结束后，使用下面的命令对`in.c`进行词法分析+语法分析。
