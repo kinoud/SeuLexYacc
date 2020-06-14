@@ -2293,7 +2293,7 @@ token 125 [}]         yylval=-1
 
 我们使用 `.l` 文件如下：
 
-```lex
+```c
 %{
 #include <stdlib.h>
 #include "test.h"
@@ -2338,7 +2338,7 @@ int installNum(){
 
 `yacc`文件如下：
 
-```yacc
+```c
 %{
 //some .y headers
 #include "test.h"
@@ -2372,7 +2372,7 @@ expr    : expr '+' expr     {$$=$1+$3;}
 
 额外的头文件：
 
-```plain
+```c
 typedef struct _Magic {
 	int x;
 	int y;
@@ -2380,6 +2380,13 @@ typedef struct _Magic {
 ```
 
 可以看到 MAGIC 类型的特殊终结符的处理和`\101`/`\x65`这样的转移字符处理。
+
+对于输入：
+
+```plain
+-(9+1)*(26-2*(2+1))
+(2`@3)+5
+```
 
 输出结果为：
 
