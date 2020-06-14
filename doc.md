@@ -70,7 +70,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 - `class Symbol`
 
-  **符号类**。
+  符号类。
 
   主要成员变量：
 
@@ -80,7 +80,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 - `class SymbolPool`
 
-  **符号池类**。
+  符号池类。
 
   主要成员方法：
 
@@ -88,13 +88,13 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 - `so:SymbolPool`
 
-  一个**符号池实例**，为全局范围所公用。
+  一个符号池实例，为全局范围所公用。
 
 #### 3.2.2 FA.py
 
 -  `class FA`
 
-  **NFA与DFA类**（我们将DFA看作一种特殊的NFA）。
+  NFA与DFA类（我们将DFA看作一种特殊的NFA）。
 
   主要成员方法：
 
@@ -106,8 +106,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
     T是一个节点编号列表，返回一个节点编号集合，表示是T的epsilon闭包。
 
-
-**McMaughton-Yamada-Thompson算法相关：**
+*McMaughton-Yamada-Thompson算法相关：*
 
 - `nfa_link(g:FA,f:FA)->FA`
 
@@ -133,17 +132,17 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   将若干个NFA合并成1个NFA，重新分配节点编号。
 
-**NFA确定化以及DFA最小化：**
+*NFA确定化以及DFA最小化：*
 
 - `get_dfa_from_nfa(nfa:FA,fn_info_node:lambda)->FA`
 
-  **NFA确定化**，参数`fn_info_node`是一个函数，最终的DFA中的节点的附加信息是通过它所包含的原NFA节点的附加信息生成的，这个生成过程由参数`fn_info_node`定义。
+  NFA确定化，参数`fn_info_node`是一个函数，最终的DFA中的节点的附加信息是通过它所包含的原NFA节点的附加信息生成的，这个生成过程由参数`fn_info_node`定义。
 
 - `minimized_dfa(dfa:FA,fn_partition_id:lambda,fn_info_node)->FA`
 
-  **DFA最小化**，参数`fn_partition_id`是一个函数，用以确定初始划分，参数`fn_info_node`也是一个函数，用以生成节点的附加信息。
+  DFA最小化，参数`fn_partition_id`是一个函数，用以确定初始划分，参数`fn_info_node`也是一个函数，用以生成节点的附加信息。
 
-**其他函数：**
+*其他函数：*
 
 - `draw_mermaid(g:FA)`
 
@@ -256,7 +255,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
     高效构造LALR语法分析表算法的后半部分。即使用不动点方法，不断传播向前看符号直到没有改变发生。
 
-**自动机构造算法相关：**
+*自动机构造算法相关：*
 
 - `CLOSURE_LR0(I:State)->State`
 
@@ -278,7 +277,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   由不动点法求出所有非终结符的first集合。
 
-**此模块对外提供的接口：**
+*此模块对外提供的接口：*
 
 - `addProduction(lhs:Symbol,rhs:list<Symbol>,priority:int=None)->Production`
 
@@ -318,9 +317,11 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   获取编号为i的状态在下一个符号是x的情况下的动作（移入或归约），返回一个二元组`(info,t)`，t是字符`'r'`或`'s'`或空字符，分别表示归约或移入或无动作，info是归约信息或移入信息，如果是移入信息，那么它是一个整数，如果是归约信息，那么它的格式参见上面的`getReduceInfo`方法。
 
+
+
 #### 3.2.4 regexparser.py
 
-**此模块对外提供的接口：** 
+*此模块对外提供的接口：* 
 
 - `build()`
 
@@ -366,7 +367,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   按照名称从缓存中取出一个nfa。
 
-**LALR自动机相关：**
+*LALR自动机相关：*
 
 - `bind_action(p:Production,action_id:int)`
 
@@ -382,7 +383,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   定义正则语言的所有产生式并给每个产生式绑定动作，通过`LALR`模块提供的接口构建LALR自动机。
 
-**正则语言相关：**
+*正则语言相关：*
 
 - `get_char_range(syba:Symbol,sybb:Symbol)->set<Symbol>`
 
@@ -403,6 +404,8 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 - `_regex_normalchar:str`
 
   全局变量，定义了除了上述两种符号之外的其他的正则语言所接受的符号。
+
+
 
 #### 3.2.5 seulex.py
 
@@ -593,6 +596,8 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
   - `genYtabc()`
 
     生成`y.tab.c`文件，此前，所有的写入动作只是写入内存，现在，将内存中保存的结果写入`y.tab.c`文件。
+  
+  
 
 #### 3.2.7 lexyyframe.c
 
@@ -600,7 +605,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
 下面介绍这个模板文件中包含的部分全局变量和方法。
 
-**对用户开放的变量和方法：**
+*对用户开放的变量和方法：*
 
 - `char yytext[MAX_TOKEN_SIZE]; int yyleng; int yylval;int*yyaval;`
 
@@ -622,7 +627,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   初始化。在驱动程序中使用词法分析器之前，需要先调用一次初始化，在此过程中将构建词法分析需要的DFA。
 
-**内部实现相关：**
+*内部实现相关：*
 
 - `#define _DFA_NODE_CNT ***`
 
@@ -834,6 +839,8 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   入口函数。接收1个额外参数，即`.y`文件的路径。
 
+
+
 ## 4 使用说明
 
 ### 4.1 环境的安装与配置
@@ -988,6 +995,161 @@ python draw.py
 在 Yacc 文件中，除了`%left`,`%right`,`%start`,`%token`,`%prec`外，还支持`%type TYPE_NAME`。它可以在META段可以在产生式段使用，每个Token或者产生式所对应的类型都是它之前最近一个`%type`指定的，如果之前没有`%type`则默认类型是`int`。
 
 ## 5 测试用例与结果分析
+
+### 5.1 一个简单的四则运算计算器案例
+
+这一小节里，我们通过一个简单的四则运算计算器案例来展示seulex与seuyacc对于Lex文件和Yacc文件的要求，以及它们生成的成品所具有的功能。相比于使用C语言的全集，在这个简单的案例中我们可以更轻松地看到seulex与seuyacc的功能。
+
+我们试图实现一个简易计算器，它支持`+-*/()`运算，这个计算器可以对它的输入文件中每一行的算数表达式进行（实数）运算，然后打印其运算结果。
+
+#### 5.1.1 Lex文件
+
+```c
+%{
+    //user headers
+%}
+
+delim       [ \t]
+ws          {delim}+
+digit       [0-9]
+number      {digit}+(\.{digit}+)?
+
+%% 
+
+{ws}        	{return OMIT;}
+{number}    	{ 	
+					yyaval=(int*)malloc(sizeof(double));
+                  	*((double*)yyaval)=str_to_double(yytext,yyleng);
+                	return NUMBER;
+                }
+"+"           	{return '+';}
+"-"          	{return '-';}
+"*"           	{return '*';}
+"/"          	{return '/';}
+"("           	{return '(';}
+")"           	{return ')';}
+"\n"           	{return '\n';}
+
+%%
+
+double str_to_double(char* s,int n){
+	double ans=0;
+	int tail=0;
+	for(int i=0;i<n;i++){
+		if(s[i]=='.')
+			tail=n-1-i;
+		else{
+			ans=ans*10+s[i]-'0';
+		}
+	}
+	for(int i=0;i<tail;i++)
+		ans/=10;
+	return ans;
+}
+```
+
+说明：
+
+1. `OMIT`是一个预定义的整数，值为-1，所有应当被语法分析忽视的词素的匹配动作都应当返回这个值。
+2. `yyaval`是一个`int`类型的指针，但是事实上，它被当作一个任意指针来使用。在词法分析器中，我们给这个任意指针分配一块内存，这块内存的数据结构由用户来指定（例如上图中我们指定分配一个double类型）。在语法分析器的动作中，我们可以通过`yyaval`提取出这块内存中的内容，从而获取关于这个词素的额外信息。
+
+#### 5.1.2 Yacc文件
+
+```c
+%{
+    //user headers
+%}
+
+%type double
+%token NUMBER
+%left '+' '-'
+%left '*' '/'
+%right UMINUS
+%start lines
+
+%%
+    
+lines   : lines expr '\n'   	{printf("ans=%lf\n",$2);}
+        | lines '\n' 
+        |                
+        ;
+expr    : expr '+' expr     	{$$=$1+$3;}
+        | expr '-' expr     	{$$=$1-$3;}
+        | expr '*' expr     	{$$=$1*$3;}  
+        | expr '/' expr     	{$$=$1/$3;}
+        | '(' expr ')'      	{$$=$2;}
+        | '-' expr %prec UMINUS {$$=-$2;}
+        | NUMBER   
+        ;
+
+%%
+    
+//user functions
+```
+
+说明：
+
+1. `%type double`声明其后声明的Token或产生式左部符号的属性值的类型均为`double`，在此处，即是说明`NUMBER`、`lines`、`expr`的属性值的类型都是`double`。`%type`标记也可以写在产生式定义的部分，独占1行，表示从这里开始，后面的产生式左部的属性值的类型均为`%type`所指明的类型。
+2. `%left`和`%right`指定终结符号的结合性。并且越后面声明的优先级也越高。
+3. 在每个产生式的后面、匹配动作的前面之间的`%prec`显式定义了此产生式的优先级。它的后面跟一个终结符号，表示该产生式的优先级等同于此终结符号的优先级。
+
+#### 5.1.3 测试用例及结果
+
+*测试用例1：*
+
+```
+1+2+3+4
+-1-2-3-4
+1*2/3/4
+1+2*3+4
+(1+2)*3+4
+((1+2)*3+4)*5
+```
+
+*分析结果1：*
+
+```
+ans=10.000000
+ans=-10.000000
+ans=0.166667
+ans=11.000000
+ans=13.000000
+ans=65.000000
+yacc work is done
+
+final stacks:
+[ ] <=== [ -2 0 ] <=== yylex()
+[ 0  ]
+grammer tree draw code generated!
+
+parsing done, please check the results
+```
+
+------
+
+*测试用例2：*
+
+```
+1+  2 +	3+4
+-1-2-3-  4
+
+1* 2/3/4
+1 +2  *3+4
+(  1 +2)*3+4
+
+
+((1+2)*3+4 )  *5
+
+ 
+```
+
+*测试结果2：*
+
+（与测试结果1相同）
+
+### 5.2 C99
+
+
 
 ## 6 课程设计总结
 
