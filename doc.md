@@ -1,3 +1,60 @@
+![](img/seu.jpg)
+
+<h1><center>编译原理课程设计<br>设计报告</center></h1>
+
+
+<div align='right'>
+<b>组长</b><br>陈昊威 09017121<br>
+<b>组员</b><br>周畅 09017123<br>
+     韩数 09017124
+</div>
+
+
+
+<div align='center'>东南大学计算机科学与工程学院<br>二〇二〇年六月</div>
+<table>
+    <tr>
+        <td>设计任务名称</td>
+        <td colspan='3'>SeuLexYacc</td>
+    </tr>
+    <tr>
+        <td>完成时间</td>
+        <td>2020-6-14</td>
+        <td>验收时间</td>
+        <td>2020-6-14</td>
+    </tr>
+    <tr>
+        <td colspan='4' align='center'>本组员情况</td>
+    </tr>
+    <tr>
+        <td>学号</td>
+        <td>姓名</td>
+        <td>承担的任务</td>
+        <td>成绩</td>
+    </tr>
+    <tr>
+        <td>09017121</td>
+        <td>陈昊威</td>
+        <td>针对c99语言的测试。报告5.2节的撰写。</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>09017123</td>
+        <td>周畅</td>
+        <td>整体架构；symbolpool模块编写；FA模块编写；LALR模块编写；regexparser模块编写；seulex模块编写；seuyacc模块编写；本报告的大部分撰写工作。</td>
+        <td></td>
+    </tr>
+    <tr>
+        <td>09017124</td>
+        <td>韩数</td>
+        <td></td>
+        <td></td>
+    </tr>
+</table>
+
+
+
+
 [TOC]
 
 ## 1 编译对象与编译功能
@@ -1095,7 +1152,7 @@ expr    : expr '+' expr     	{$$=$1+$3;}
 
 #### 5.1.3 测试用例及结果
 
-*测试用例1：*
+测试用例1
 
 ```
 1+2+3+4
@@ -1106,7 +1163,7 @@ expr    : expr '+' expr     	{$$=$1+$3;}
 ((1+2)*3+4)*5
 ```
 
-*分析结果1：*
+分析结果1
 
 ```
 ans=10.000000
@@ -1125,9 +1182,13 @@ grammer tree draw code generated!
 parsing done, please check the results
 ```
 
+语法树（部分）
+
+![](img/四则运算语法树.png)
+
 ------
 
-*测试用例2：*
+测试用例2
 
 ```
 1+  2 +	3+4
@@ -1143,11 +1204,1089 @@ parsing done, please check the results
  
 ```
 
-*测试结果2：*
+测试结果2
 
 （与测试结果1相同）
 
 ### 5.2 C99
+
+#### 5.2.1 变量声明测试
+
+测试代码
+
+```c
+char a = 'a';
+int b = 1;
+short c = 2;
+long d = 3;
+float e = 1.0;
+double f = 2.0;
+```
+
+词法分析结果
+
+```
+token 264 [char]         yylval=-1
+token 296 [a]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 ['a']         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [b]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [1]         yylval=-1
+token  59 [;]         yylval=-1
+token 284 [short]         yylval=-1
+token 296 [c]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [2]         yylval=-1
+token  59 [;]         yylval=-1
+token 281 [long]         yylval=-1
+token 296 [d]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [3]         yylval=-1
+token  59 [;]         yylval=-1
+token 274 [float]         yylval=-1
+token 296 [e]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [1.0]         yylval=-1
+token  59 [;]         yylval=-1
+token 270 [double]         yylval=-1
+token 296 [f]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [2.0]         yylval=-1
+token  59 [;]         yylval=-1
+```
+
+语法树
+
+![](img\变量声明语法树1.png)
+
+![](img\变量声明语法树2.png)
+
+#### 5.2.2 判断语句测试
+
+测试代码
+
+if语句
+
+```c
+int main(){
+	int a = 100;
+    int b = 200;
+    int c = a+b;
+	//if语句
+    if(a == b)
+	    printf("%d",c);
+}
+```
+
+if..else语句
+
+```c
+int main(){
+	int a = 100;
+    int b = 200;
+	//if..else语句
+    if(a > b)
+	    printf("%d",a);
+    else
+	    printf("%d",b);
+}
+```
+
+嵌套if语句
+
+```c
+int main(){
+	int a = 100;
+    int b = 200;
+	int c = a + b;
+	//嵌套if语句
+    if(a <= b)
+	    if(a < b)
+		    printf("%d",a);
+	    else
+		    printf("%d",c);
+    else
+	    printf("%d",b);
+}
+```
+
+switch语句
+
+```c
+int main(){
+	char grade = 'B';
+	switch(grade)
+    {
+       case 'A' :
+          printf("A" );
+          break;
+       case 'B' :
+	      printf("B" );
+          break;
+       case 'C' :
+          printf("C" );
+          break;
+       default :
+          printf("No" );
+    }
+}
+```
+
+
+
+词法分析结果
+
+if语句
+
+```
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [a]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [100]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [b]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [200]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [c]         yylval=-1
+token  61 [=]         yylval=-1
+token 296 [a]         yylval=-1
+token  43 [+]         yylval=-1
+token 296 [b]         yylval=-1
+token  59 [;]         yylval=-1
+token 277 [if]         yylval=-1
+token  40 [(]         yylval=-1
+token 296 [a]         yylval=-1
+token 318 [==]         yylval=-1
+token 296 [b]         yylval=-1
+token  41 [)]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [c]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+if..else语句
+
+```
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [a]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [100]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [b]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [200]         yylval=-1
+token  59 [;]         yylval=-1
+token 277 [if]         yylval=-1
+token  40 [(]         yylval=-1
+token 296 [a]         yylval=-1
+token  62 [>]         yylval=-1
+token 296 [b]         yylval=-1
+token  41 [)]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [a]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 271 [else]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [b]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+嵌套if语句
+
+```
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [a]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [100]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [b]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [200]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [c]         yylval=-1
+token  61 [=]         yylval=-1
+token 296 [a]         yylval=-1
+token  43 [+]         yylval=-1
+token 296 [b]         yylval=-1
+token  59 [;]         yylval=-1
+token 277 [if]         yylval=-1
+token  40 [(]         yylval=-1
+token 296 [a]         yylval=-1
+token 316 [<=]         yylval=-1
+token 296 [b]         yylval=-1
+token  41 [)]         yylval=-1
+token 277 [if]         yylval=-1
+token  40 [(]         yylval=-1
+token 296 [a]         yylval=-1
+token  60 [<]         yylval=-1
+token 296 [b]         yylval=-1
+token  41 [)]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [a]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 271 [else]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [c]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 271 [else]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [b]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+switch语句
+
+```
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 264 [char]         yylval=-1
+token 296 [grade]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 ['B']         yylval=-1
+token  59 [;]         yylval=-1
+token 289 [switch]         yylval=-1
+token  40 [(]         yylval=-1
+token 296 [grade]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 263 [case]         yylval=-1
+token 297 ['A']         yylval=-1
+token  58 [:]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["A"]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 262 [break]         yylval=-1
+token  59 [;]         yylval=-1
+token 263 [case]         yylval=-1
+token 297 ['B']         yylval=-1
+token  58 [:]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["B"]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 262 [break]         yylval=-1
+token  59 [;]         yylval=-1
+token 263 [case]         yylval=-1
+token 297 ['C']         yylval=-1
+token  58 [:]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["C"]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 262 [break]         yylval=-1
+token  59 [;]         yylval=-1
+token 268 [default]         yylval=-1
+token  58 [:]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["No"]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+语法树
+
+if语句
+
+![](img\判断语句语法树1.png)
+
+![判断语句语法树2](img\判断语句语法树2.png)
+
+![判断语句语法树3](img\判断语句语法树3.png)
+
+if..else语句
+
+![](img\判断语句语法树4.png)
+
+![判断语句语法树5](img\判断语句语法树5.png)
+
+![判断语句语法树6](img\判断语句语法树6.png)
+
+嵌套if语句
+
+![](img\判断语句语法树7.png)
+
+![判断语句语法树8](img\判断语句语法树8.png)
+
+![判断语句语法树9](img\判断语句语法树9.png)
+
+![判断语句语法树10](img\判断语句语法树10.png)
+
+switch语句
+
+![](img\判断语句语法树11.png)
+
+![判断语句语法树12](img\判断语句语法树12.png)
+
+![判断语句语法树13](img\判断语句语法树13.png)
+
+![判断语句语法树14](img\判断语句语法树14.png)
+
+#### 5.2.3 循环语句测试
+
+测试代码
+
+```c
+int main(){
+	int a = 10;
+	//while语句
+	 while( a < 20 )
+   {
+      printf("%d", a);
+      a++;
+   }
+}
+```
+
+```c
+int main(){
+	//for语句
+	for( int a = 10; a < 20; a++ )
+   {
+      printf("%d\n", a);
+   }
+}
+```
+
+```c
+int main(){
+	//do...while循环
+	a = 10;
+	do
+   {
+       printf("%d\n", a);
+       a++;
+   }while( a < 20 );
+}
+```
+
+
+
+词法分析结果
+
+while语句
+
+```
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [a]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [10]         yylval=-1
+token  59 [;]         yylval=-1
+token 295 [while]         yylval=-1
+token  40 [(]         yylval=-1
+token 296 [a]         yylval=-1
+token  60 [<]         yylval=-1
+token 297 [20]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [a]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [a]         yylval=-1
+token 311 [++]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+for语句
+
+```
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 275 [for]         yylval=-1
+token  40 [(]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [a]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [10]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [a]         yylval=-1
+token  60 [<]         yylval=-1
+token 297 [20]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [a]         yylval=-1
+token 311 [++]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d\n"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [a]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+do...while语句
+
+```
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 296 [a]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [10]         yylval=-1
+token  59 [;]         yylval=-1
+token 269 [do]         yylval=-1
+token 123 [{]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d\n"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [a]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [a]         yylval=-1
+token 311 [++]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+token 295 [while]         yylval=-1
+token  40 [(]         yylval=-1
+token 296 [a]         yylval=-1
+token  60 [<]         yylval=-1
+token 297 [20]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+
+
+语法树
+
+while语句
+
+![](img\循环语句语法树1.png)
+
+![循环语句语法树2](img\循环语句语法树2.png)
+
+![循环语句语法树3](img\循环语句语法树3.png)
+
+for语句
+
+![](img\循环语句语法树4.png)
+
+![循环语句语法树5](img\循环语句语法树5.png)
+
+![循环语句语法树6](img\循环语句语法树6.png)
+
+do...while语句
+
+![](img\循环语句语法树7.png)
+
+![循环语句语法树8](img\循环语句语法树8.png)
+
+![循环语句语法树9](img\循环语句语法树9.png)
+
+#### 5.2.4 函数调用测试
+
+测试代码
+
+```c
+int max(int num1, int num2) 
+{
+   int result;
+ 
+   if (num1 > num2)
+      result = num1;
+   else
+      result = num2;
+ 
+   return result; 
+}
+int main(){
+	int a = 1;
+	int b = 2;
+	int c = max(a,b);
+}
+```
+
+词法分析结果
+
+```
+token 280 [int]         yylval=-1
+token 296 [max]         yylval=-1
+token  40 [(]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [num1]         yylval=-1
+token  44 [,]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [num2]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [result]         yylval=-1
+token  59 [;]         yylval=-1
+token 277 [if]         yylval=-1
+token  40 [(]         yylval=-1
+token 296 [num1]         yylval=-1
+token  62 [>]         yylval=-1
+token 296 [num2]         yylval=-1
+token  41 [)]         yylval=-1
+token 296 [result]         yylval=-1
+token  61 [=]         yylval=-1
+token 296 [num1]         yylval=-1
+token  59 [;]         yylval=-1
+token 271 [else]         yylval=-1
+token 296 [result]         yylval=-1
+token  61 [=]         yylval=-1
+token 296 [num2]         yylval=-1
+token  59 [;]         yylval=-1
+token 321 [return]         yylval=-1
+token 296 [result]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [a]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [1]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [b]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [2]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [c]         yylval=-1
+token  61 [=]         yylval=-1
+token 296 [max]         yylval=-1
+token  40 [(]         yylval=-1
+token 296 [a]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [b]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+语法树
+
+![](img\函数调用语法树1.png)
+
+![函数调用语法树2](img\函数调用语法树2.png)
+
+![函数调用语法树3](img\函数调用语法树3.png)
+
+![函数调用语法树4](img\函数调用语法树4.png)
+
+#### 5.2.5 数组测试
+
+测试代码
+
+数组声明
+
+```c
+char a[3] = {'a','b','c'};
+int b[3] = {1,2,3};
+short c[3] = {1,2,3};
+long d[3] = {1,2,3};
+float e[3] = {1.0,2.0,3.0};
+double f[3] = {1.0,2.0,3.0};
+```
+
+数组调用
+
+```c
+int main(){
+	int a[3] = {1,2,3};
+	for(int i = 0;i < 3; i++)
+	{
+		printf("%d",a[i]);
+	}
+}
+```
+
+词法分析结果
+
+数组声明
+
+```
+token 264 [char]         yylval=-1
+token 296 [a]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [3]         yylval=-1
+token  93 []]         yylval=-1
+token  61 [=]         yylval=-1
+token 123 [{]         yylval=-1
+token 297 ['a']         yylval=-1
+token  44 [,]         yylval=-1
+token 297 ['b']         yylval=-1
+token  44 [,]         yylval=-1
+token 297 ['c']         yylval=-1
+token 125 [}]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [b]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [3]         yylval=-1
+token  93 []]         yylval=-1
+token  61 [=]         yylval=-1
+token 123 [{]         yylval=-1
+token 297 [1]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [2]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [3]         yylval=-1
+token 125 [}]         yylval=-1
+token  59 [;]         yylval=-1
+token 284 [short]         yylval=-1
+token 296 [c]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [3]         yylval=-1
+token  93 []]         yylval=-1
+token  61 [=]         yylval=-1
+token 123 [{]         yylval=-1
+token 297 [1]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [2]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [3]         yylval=-1
+token 125 [}]         yylval=-1
+token  59 [;]         yylval=-1
+token 281 [long]         yylval=-1
+token 296 [d]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [3]         yylval=-1
+token  93 []]         yylval=-1
+token  61 [=]         yylval=-1
+token 123 [{]         yylval=-1
+token 297 [1]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [2]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [3]         yylval=-1
+token 125 [}]         yylval=-1
+token  59 [;]         yylval=-1
+token 274 [float]         yylval=-1
+token 296 [e]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [3]         yylval=-1
+token  93 []]         yylval=-1
+token  61 [=]         yylval=-1
+token 123 [{]         yylval=-1
+token 297 [1.0]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [2.0]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [3.0]         yylval=-1
+token 125 [}]         yylval=-1
+token  59 [;]         yylval=-1
+token 270 [double]         yylval=-1
+token 296 [f]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [3]         yylval=-1
+token  93 []]         yylval=-1
+token  61 [=]         yylval=-1
+token 123 [{]         yylval=-1
+token 297 [1.0]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [2.0]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [3.0]         yylval=-1
+token 125 [}]         yylval=-1
+token  59 [;]         yylval=-1
+```
+
+数组调用
+
+```
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [a]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [3]         yylval=-1
+token  93 []]         yylval=-1
+token  61 [=]         yylval=-1
+token 123 [{]         yylval=-1
+token 297 [1]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [2]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [3]         yylval=-1
+token 125 [}]         yylval=-1
+token  59 [;]         yylval=-1
+token 275 [for]         yylval=-1
+token  40 [(]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [i]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [0]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [i]         yylval=-1
+token  60 [<]         yylval=-1
+token 297 [3]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [i]         yylval=-1
+token 311 [++]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [a]         yylval=-1
+token  91 [[]         yylval=-1
+token 296 [i]         yylval=-1
+token  93 []]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+语法树
+
+数组声明
+
+![](img\数组语法树1.png)
+
+![数组语法树2](img\数组语法树2.png)
+
+![数组语法树3](img\数组语法树3.png)
+
+![数组语法树4](img\数组语法树4.png)
+
+数组调用
+
+![](img\数组语法树5.png)
+
+![数组语法树6](img\数组语法树6.png)
+
+![数组语法树7](img\数组语法树7.png)
+
+#### 5.2.6 枚举测试
+
+测试代码
+
+```c
+enum DAY
+{
+      MON=1, TUE, WED, THU, FRI, SAT, SUN
+};
+ 
+int main()
+{
+    enum DAY day;
+    day = WED;
+    printf("%d",day);
+    return 0;
+}
+```
+
+词法分析结果
+
+```
+token 272 [enum]         yylval=-1
+token 296 [DAY]         yylval=-1
+token 123 [{]         yylval=-1
+token 296 [MON]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [1]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [TUE]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [WED]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [THU]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [FRI]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [SAT]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [SUN]         yylval=-1
+token 125 [}]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 272 [enum]         yylval=-1
+token 296 [DAY]         yylval=-1
+token 296 [day]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [day]         yylval=-1
+token  61 [=]         yylval=-1
+token 296 [WED]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [day]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 321 [return]         yylval=-1
+token 297 [0]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+语法树
+
+![](img\枚举语法树1.png)
+
+![枚举语法树2](img\枚举语法树2.png)
+
+![枚举语法树3](img\枚举语法树3.png)
+
+#### 5.2.7 指针测试
+
+测试代码
+
+```c
+int main()
+{
+   int  var = 20;   
+   int  *ip;        
+ 
+   ip = &var;  
+ 
+   printf("%p\n", &var  );
+   printf("%p\n", ip );
+   printf("%d\n", *ip );
+}
+```
+
+词法结果分析
+
+```
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [var]         yylval=-1
+token  61 [=]         yylval=-1
+token 297 [20]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token  42 [*]         yylval=-1
+token 296 [ip]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [ip]         yylval=-1
+token  61 [=]         yylval=-1
+token  38 [&]         yylval=-1
+token 296 [var]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%p\n"]         yylval=-1
+token  44 [,]         yylval=-1
+token  38 [&]         yylval=-1
+token 296 [var]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%p\n"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [ip]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["%d\n"]         yylval=-1
+token  44 [,]         yylval=-1
+token  42 [*]         yylval=-1
+token 296 [ip]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+语法树
+
+![](img\指针语法树1.png)
+
+![指针语法树2](img\指针语法树2.png)
+
+![指针语法树3](img\指针语法树3.png)
+
+#### 5.2.8 结构体测试
+
+测试代码
+
+```c
+struct Books
+{
+   char  title[50];
+   char  author[50];
+   char  subject[100];
+   int   book_id;
+} book = {"C++", "ABC", "DEF", 123456};
+ 
+int main()
+{
+    printf("title : %s\nauthor: %s\nsubject: %s\nbook_id: %d\n", book.title, book.author, book.subject, book.book_id);
+}
+```
+
+词法分析结果
+
+```
+token 288 [struct]         yylval=-1
+token 296 [Books]         yylval=-1
+token 123 [{]         yylval=-1
+token 264 [char]         yylval=-1
+token 296 [title]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [50]         yylval=-1
+token  93 []]         yylval=-1
+token  59 [;]         yylval=-1
+token 264 [char]         yylval=-1
+token 296 [author]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [50]         yylval=-1
+token  93 []]         yylval=-1
+token  59 [;]         yylval=-1
+token 264 [char]         yylval=-1
+token 296 [subject]         yylval=-1
+token  91 [[]         yylval=-1
+token 297 [100]         yylval=-1
+token  93 []]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [book_id]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+token 296 [book]         yylval=-1
+token  61 [=]         yylval=-1
+token 123 [{]         yylval=-1
+token 320 ["C++"]         yylval=-1
+token  44 [,]         yylval=-1
+token 320 ["ABC"]         yylval=-1
+token  44 [,]         yylval=-1
+token 320 ["DEF"]         yylval=-1
+token  44 [,]         yylval=-1
+token 297 [123456]         yylval=-1
+token 125 [}]         yylval=-1
+token  59 [;]         yylval=-1
+token 280 [int]         yylval=-1
+token 296 [main]         yylval=-1
+token  40 [(]         yylval=-1
+token  41 [)]         yylval=-1
+token 123 [{]         yylval=-1
+token 296 [printf]         yylval=-1
+token  40 [(]         yylval=-1
+token 320 ["title : %s\nauthor: %s\nsubject: %s\nbook_id: %d\n"]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [book]         yylval=-1
+token  46 [.]         yylval=-1
+token 296 [title]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [book]         yylval=-1
+token  46 [.]         yylval=-1
+token 296 [author]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [book]         yylval=-1
+token  46 [.]         yylval=-1
+token 296 [subject]         yylval=-1
+token  44 [,]         yylval=-1
+token 296 [book]         yylval=-1
+token  46 [.]         yylval=-1
+token 296 [book_id]         yylval=-1
+token  41 [)]         yylval=-1
+token  59 [;]         yylval=-1
+token 125 [}]         yylval=-1
+```
+
+语法树
+
+![](img\结构体语法树1.png)
+
+![结构体语法树2](img\结构体语法树2.png)
+
+![结构体语法树3](img\结构体语法树3.png)
+
+![结构体语法树4](img\结构体语法树4.png)
 
 
 
