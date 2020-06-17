@@ -233,10 +233,6 @@ def define_actions():
     def char__slash_symbol(a,a_ch):
         a['ch']=a_ch[1]['syb']
     
-    @REGISTER_ACTION(22)
-    def char__forse_as_is_symbol(a,a_ch):
-        a['ch']=a_ch[1]['syb']
-    
 def build():
 
     global eps,eos
