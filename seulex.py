@@ -209,6 +209,10 @@ class LexReader:
                     lastTurn='\\'
                     cur=5
                     q+=1
+                elif x=='\\':
+                    lastTurn='\\'
+                    cur=5
+                    q+=1
                 else:
                     ans.append(x)
                     q+=1
