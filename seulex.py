@@ -29,7 +29,7 @@ class Writer:
         self.mark=[]
         assert os.path.isfile(framefile)
         self.outputfile=outputfile
-        with open(framefile,'r') as f:
+        with open(framefile,'r',encoding='latin-1') as f:
             t=0
             while True:
                 line=f.readline()
@@ -47,7 +47,7 @@ class Writer:
                     self.frame_part[-1]+=line
 
     def writeDown(self):
-        with open(self.outputfile,'w') as f:
+        with open(self.outputfile,'w',encoding='latin-1') as f:
             i,j=0,0
             for m in self.mark:
                 if m==0:
@@ -77,9 +77,8 @@ class LexReader:
 
     def __init__(self,filename,verbo=False):
         assert os.path.isfile(filename)
-        f=open(filename,'r')
-        self._buffer=f.read()
-        f.close()
+        with open(filename,'r',encoding='latin-1') as f:
+            self._buffer=f.read()
         self._p=0
         self.verbo=verbo
         pass
@@ -141,7 +140,7 @@ class LexReader:
         if self.verbo: print('read input: %s'%repr(ans))
         return ans
 
-    def readRegex(self):
+    def readRegex(self) -> list:
         """
         difference to readString is:
         not always ends when meeting <blank>,
@@ -156,7 +155,7 @@ class LexReader:
         oct_chars='01234567'
 
         q=p
-        ans=''
+        ans=[]
         lastTurn=''
         
         cur=0
@@ -165,12 +164,11 @@ class LexReader:
             if cur==0:
                 if x=='\\':
                     cur=1
-                    # ans+=x
                     lastTurn='\\'
                     q+=1
                 elif x=='[':
                     cur=2
-                    ans+=x
+                    ans.append(x)
                     q+=1
                 elif x=='"':
                     cur=3
@@ -178,7 +176,7 @@ class LexReader:
                 elif x in ' \n\t':
                     break
                 else:
-                    ans+=x
+                    ans.append(x)
                     q+=1
             elif cur==1:
                 cur=0
@@ -190,28 +188,29 @@ class LexReader:
                     while q<len(s) and s[q] in hex_chars and len(val)<2:
                         val+=s[q]
                         q+=1
-                    ans+='\x08'+chr(int(val,16))
+                    ans.append(['<raw>',chr(int(val,16))])
                 elif s[q] in oct_chars:
                     val=s[q]
                     q+=1
                     while q<len(s) and s[q] in oct_chars and len(val)<3:
                         val+=s[q]
                         q+=1
-                    ans+='\x08'+chr(int(val,8))
+                    ans.append(['<raw>',chr(int(val,8))])
                 else:
-                    ans+='\\'+x
+                    ans.append('\\')
+                    ans.append(x)
                     q+=1
             elif cur==2:
                 if x==']':
                     cur=0
-                    ans+=x
+                    ans.append(x)
                     q+=1
                 elif x=='\\':
                     lastTurn='\\'
                     cur=5
                     q+=1
                 else:
-                    ans+=x
+                    ans.append(x)
                     q+=1
             elif cur==3:
                 if x=='"':
@@ -219,13 +218,13 @@ class LexReader:
                     q+=1
                 elif x=='\\':
                     cur=4
-                    #ans+=x
                     lastTurn='\\'
                     q+=1
                 else:
                     if x in rx._regex_specialchar+rx._regex_metachar:
-                        ans+='\\'
-                    ans+=x
+                        ans.append(['<raw>',x])
+                    else:
+                        ans.append(x)
                     q+=1
             elif cur==4:
                 cur=3
@@ -236,16 +235,17 @@ class LexReader:
                     while q<len(s) and s[q] in hex_chars and len(val)<2:
                         val+=s[q]
                         q+=1
-                    ans+='\x08'+chr(int(val,16))
+                    ans.append(['<raw>',chr(int(val,16))])
                 elif s[q] in oct_chars:
                     val=s[q]
                     q+=1
                     while q<len(s) and s[q] in oct_chars and len(val)<3:
                         val+=s[q]
                         q+=1
-                    ans+='\x08'+chr(int(val,8))
+                    ans.append(['<raw>',chr(int(val,8))])
                 else:
-                    ans+='\\'+x
+                    ans.append('\\')
+                    ans.append(x)
                     q+=1
             elif cur==5:
                 cur=2
@@ -256,19 +256,21 @@ class LexReader:
                     while q<len(s) and s[q] in hex_chars and len(val)<2:
                         val+=s[q]
                         q+=1
-                    ans+='\x08'+chr(int(val,16))
+                    ans.append(['<raw>',chr(int(val,16))])
                 elif s[q] in oct_chars:
                     val=s[q]
                     q+=1
                     while q<len(s) and s[q] in oct_chars and len(val)<3:
                         val+=s[q]
                         q+=1
-                    ans+='\x08'+chr(int(val,8))
+                    ans.append(['<raw>',chr(int(val,8))])
                 else:
-                    ans+='\\'+x
+                    ans.append('\\')
+                    ans.append(x)
                     q+=1
         
-        ans+=lastTurn
+        if len(lastTurn)>0:
+            ans.append(lastTurn)
         self._p=q
         if self.verbo: print('read input: %s'%repr(ans))
         return ans
@@ -351,11 +353,11 @@ class LexProcessor:
         self.user_ccode='' # str
         self.user_header='' # str
     
-    def addDefinition(self,term:str,reg:str):
+    def addDefinition(self,term:str,reg:list):
         print('new term :',term)
-        print(list(reg))
+        print(reg)
         rx.clear()
-        rx.pushseq(list(reg))
+        rx.pushtokenseq(reg)
         rx.pusheos()
         while(rx.step()):
             pass
@@ -367,13 +369,13 @@ class LexProcessor:
         # fam.draw(nfa,{'start':'orange','to':'lightgreen'},verbo=True)
         
 
-    def addRule(self,reg:str,c_code:str):
+    def addRule(self,reg:list,c_code:str):
         rule_id=len(self.nfa_of_rule)
         self.ccode_of_rule[rule_id]=c_code
         print('new rule: %d'%rule_id)
-        print(list(reg))
+        print(reg)
         rx.clear()
-        rx.pushseq(list(reg))
+        rx.pushtokenseq(reg)
         rx.pusheos()
         while(rx.step()):
             pass
@@ -515,7 +517,7 @@ class LexProcessor:
 if __name__=='__main__':
     import io
     import sys
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='gb18030')
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer,encoding='latin-1')
     if len(sys.argv)==1:
         print('please declare .l file')
         quit()
@@ -530,7 +532,7 @@ if __name__=='__main__':
 
     samedir=os.path.dirname(__file__)
 
-    with open(os.path.join(samedir,'lexyyframe.h'),'r') as inf,open(os.path.join(outdir,'lex.yy.h'),'w') as outf:
+    with open(os.path.join(samedir,'lexyyframe.h'),'r',encoding='latin-1') as inf,open(os.path.join(outdir,'lex.yy.h'),'w',encoding='latin-1') as outf:
         outf.write(inf.read())
 
     framefile=os.path.join(samedir,'lexyyframe.c')

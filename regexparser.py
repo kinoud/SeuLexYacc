@@ -69,9 +69,9 @@ should not overlap
 # operator, need escape
 _regex_metachar='+*?'
 # need escape
-_regex_specialchar='.^$[]()\\|{}'
+_regex_specialchar='.^-[]()\\|{}'
 # not need escape
-_regex_normalchar='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"\'- =<>%&/!;,:~#@'
+_regex_normalchar='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"\'$ =<>%&/!;,:~#@'
 
 def dot_chars_but(sybset):
     """
@@ -79,7 +79,8 @@ def dot_chars_but(sybset):
     returns: set<Symbol>
     """
     ans=set()
-    for c in _regex_metachar+_regex_normalchar:
+    for i in range(256):
+        c=chr(i)
         syb=so.getSymbol(c)
         if syb not in sybset:
             ans.add(syb)
@@ -130,7 +131,7 @@ def define_actions():
         nfa=FA()
         nfa.addNode(0)
         nfa.addNode(1)
-        for syb in dot_chars_but(set()):
+        for syb in dot_chars_but(set([so.getSymbol('\n')])):
             nfa.addEdge(0,1,syb)
         nfa.special_node['start']=0
         nfa.special_node['to']=1
@@ -209,20 +210,27 @@ def define_actions():
         a['nfa']=a_ch[0]['nfa']
 
     @REGISTER_ACTION(21)
-    def char__slash_symbol(a,a_ch):
-        a['ch']=a_ch[1]['syb']
-        c=str(a_ch[1]['syb'])
+    def char__slash_raw_symbol(a,a_ch):
+        c=a_ch[1]['raw']
         if c=='n':
             a['ch']=so.getSymbol('\n',autocreate=True)
+        elif c=='r':
+            a['ch']=so.getSymbol('\r',autocreate=True)
         elif c=='t':
             a['ch']=so.getSymbol('\t',autocreate=True)
         elif c=='v':
             a['ch']=so.getSymbol('\v',autocreate=True)
         elif c=='f':
             a['ch']=so.getSymbol('\f',autocreate=True)
-    
+        else:
+            a['ch']=so.getSymbol(c,autocreate=True)
+
     @REGISTER_ACTION(22)
-    def char__forse_as_is_symbol(a,a_ch):
+    def char__raw_symbol(a,a_ch):
+        a['ch']=so.getSymbol(a_ch[0]['raw'],autocreate=True)
+
+    @REGISTER_ACTION(23)
+    def char__slash_symbol(a,a_ch):
         a['ch']=a_ch[1]['syb']
     
 def build():
@@ -230,6 +238,9 @@ def build():
     global eps,eos
     eps = so.getSymbol('<eps>')
     eos = so.getSymbol('<eos>')
+
+    for i in range(256):
+        so.getSymbol(chr(i),True,True)
 
     lr.init()
     define_actions()
@@ -255,14 +266,12 @@ def build():
     bind_action(lr.adp('`charrange',    ['`char']),                 2)
     bind_action(lr.adp('`charrange',    ['`metachar']),             2)
     bind_action(lr.adp('`charrange',    ['`char','-','`char']),     3)
-    for c in _regex_normalchar:
-        bind_action(lr.adp('`char',     [c]),                       19)
-    bind_action(lr.addProduction(so.getSymbol('char',terminal=False,autocreate=True),[so.getSymbol('`',True,True)]),19) # cannot use adp to add `
-    bind_action(lr.addProduction(so.getSymbol('char',terminal=False,autocreate=True),[so.getSymbol('\\',True,True),so.getSymbol('`',True,True)]),21) # cannot use adp to add `
-    for c in _regex_normalchar+_regex_metachar+_regex_specialchar:
-        bind_action(lr.adp('`char',     ['\\',c]),                  21)
-    for c in range(0,256):
-        bind_action(lr.addProduction(so.getSymbol('char',terminal=False,autocreate=True),[so.getSymbol('\x08',True,True),so.getSymbol(chr(c),True,True)]),22) # cannot use adp to add `
+    bind_action(lr.adp('`char',         ['<raw>']),                 22)
+    bind_action(lr.adp('`char',         ['-']),                     19)
+    bind_action(lr.adp('`char',         ['^']),                     19)
+    bind_action(lr.adp('`char',         ['\\','<raw>']),            21)
+    for c in _regex_metachar+_regex_specialchar:
+        bind_action(lr.adp('`char',     ['\\',c]),                  23)
     for c in _regex_metachar: 
         bind_action(lr.adp('`metachar', [c]),                       19)
 
@@ -313,10 +322,33 @@ def pushseq(seq):
     for s in seq:
         pushsyb(s)
 
+def pushtokenseq(seq):
+    for s in seq:
+        pushtoken(s)
+
+def pushtoken(t):
+    if isinstance(t,str) and len(t)==1 and t not in (_regex_metachar+_regex_specialchar):
+        t=['<raw>',t]
+    if isinstance(t,list):
+        s=t[0]
+        info=t[1]
+    else:
+        s=t
+        info=None
+    s=so.getSymbol(s)
+    assert is_a_terminal(s),'token is not a terminal'
+    inq.append(s)
+    n=Node(s)
+    if info is not None:
+        n.attr['raw']=info
+    
+    #print('push token: %s|%s'%(str(n.attr['syb']),repr(n.attr['raw']) if info is not None else 'none'))
+    t_inq.append(TreeNode(n,[s]))
+
 def pushsyb(s,raw=True):
     if raw:s=so.getSymbol(s)
     if not is_a_terminal(s):
-        print('%s is not a terminal')
+        print('s is not a terminal')
         return
     inq.append(s)
     t_inq.append(TreeNode(Node(s),[s]))

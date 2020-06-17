@@ -3,7 +3,7 @@
 #include "test.h"
 %}
 
-delim       [ \t]
+delim       [\t]
 ws          {delim}+
 letter      [\101-\132a-z]
 digit       [\x30-\x39]
@@ -21,13 +21,21 @@ yyaval=(int*)malloc(sizeof(Magic));
 ((Magic*)yyaval)->y=0x30^yytext[3];
 return MAGIC;
 }
+ÄãºÃ  {
+yyaval=(int*)malloc(sizeof(Magic));
+((Magic*)yyaval)->x=1;
+((Magic*)yyaval)->y=2;
+return MAGIC;
+}
 \+           {return '+';}
 -           {return '-';}
+^           {return '^';}
 \*           {return '*';}
 /           {return '/';}
 \(           {return '(';}
 \)           {return ')';}
 \n           {return '\n';}
+" "          {return ' ';}
 
 %%
 

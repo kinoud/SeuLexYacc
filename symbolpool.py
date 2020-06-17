@@ -1,3 +1,11 @@
+def dbgPrintFormat(s:str)->str:
+    ans=''
+    for i in s:
+        if ord(i) in range(32,127):
+            ans+=i if i!='\\' else '\\\\'
+        else:
+            ans+='\\'+hex(ord(i))[1:]
+    return ans
 
 class Symbol:
     def __init__(self,id,terminal=True,terminal_id=None):
@@ -34,13 +42,15 @@ class SymbolPool():
         # predefined symbols
         self.getSymbol('<eps>',autocreate=True) # epsilon (null char)
         self.getSymbol('<eos>',autocreate=True) # end of stream (end of input)
+        self.getSymbol('<raw>',autocreate=True) # raw char in regex tokens
     
     def getSymbol(self,id:str,terminal=True,autocreate=False,terminal_id=None):
         if not autocreate:
             return self._symbol_pool[id]
         if self._symbol_pool.get(id) is None:
             self._symbol_pool[id]=Symbol(id,terminal,terminal_id=terminal_id)
-            print('new symbol(%s): %s'%('ter'if terminal else'non',repr(id)))
+            
+            print('new symbol(%s): %s'%('ter'if terminal else'non',dbgPrintFormat(id)))
         return self._symbol_pool[id]
     
     def __iter__(self):

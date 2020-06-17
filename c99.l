@@ -115,7 +115,7 @@ L?\"(\\.|[^\\"\n])*\"	{ count(); return(STRING_LITERAL); }
 "|"			{ count(); return('|'); }
 "?"			{ count(); return('?'); }
 
-[ \t\v\n\f]		{ count(); return OMIT;}
+[ \t\v\n\f\r]		{ count(); return OMIT;}
 .			{ printf("dont match any rules!\n"); return 0; }
 
 %%

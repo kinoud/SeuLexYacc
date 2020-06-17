@@ -8,6 +8,7 @@
 
 %left '+' '-'
 %left '*' '/'
+%left ' '
 %right UMINUS
 %start lines
 
@@ -21,6 +22,7 @@ expr    : expr '+' expr     {$$=$1+$3;}
         | expr '-' expr     {$$=$1-$3;}
         | expr '*' expr     {$$=$1*$3;}  
         | expr '/' expr     {$$=$1/$3;}
+        | expr ' ' expr     {$$=$1*$3;}
         | '(' expr ')'      {$$=$2;}
         | '-' expr %prec UMINUS {$$=-$2;}
         | NUMBER   

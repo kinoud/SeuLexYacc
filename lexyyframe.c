@@ -66,7 +66,7 @@ void _dfa_build(){
 $$$
 }
 
-int _dfa_step(char ter){
+int _dfa_step(int ter){
     if(_to[_cur][ter]==-1)
         return 1;
     _cur=_to[_cur][ter];
@@ -96,7 +96,7 @@ int yylex(){
     yylval=-1;
     yyaval=NULL;
     _cur=_start_node;
-    char x;
+    int x;
     while(1){
         x=input();
         yytext[yyleng++]=x;

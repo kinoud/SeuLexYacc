@@ -304,12 +304,12 @@ int _step(){
 
 FILE *_fp;
 
-char input(){
+int input(){
     int x=fgetc(_fp);
     return x==-1?0:x;
 }
 
-void unput(char x){
+void unput(int x){
     ungetc(x,_fp);
 }
 

@@ -672,11 +672,11 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   执行一步词法分析，即从输入流中读取一个匹配的字符串，返回它所匹配的Token ID。
 
-- `char input();`
+- `int input();`
 
   从输入流中获取下一个字符的方法。此方法由`lex.yy.c`的驱动程序定义，或者由用户自定义代码部分定义。
 
-- `void unput(char x);`
+- `void unput(int x);`
 
   将字符x放回输入流中。此方法由`lex.yy.c`的驱动程序定义，或者由用户自定义代码部分定义。
 
@@ -888,7 +888,7 @@ C语言全集。详见本报告目录下的`c99.l`文件与`c99.y`文件。
 
   seuyacc输入的`.y`文件的文件指针。
 
-- `char input(); void unput(char x);`
+- `int input(); void unput(int x);`
 
   这两个函数即是对`lexyyframe.c`中所定义原型的实现，其含义参考` lexyyframe.c`中的介绍。
 

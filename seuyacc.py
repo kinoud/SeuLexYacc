@@ -21,12 +21,36 @@ print(lr.getAction(0,d))
 
 NOTE:
 bugs:
-1. do not use ' ' as blank, it is recognized as ["'","'"] rather than [" "]
-2. user defined token id must < YaccProcessor._id_of_nonter_base
+[fixed]1. do not use ' ' as blank, it is recognized as ["'","'"] rather than [" "]
+[fixed] 2. user defined token id must < YaccProcessor._id_of_nonter_base
 """
 
 class YaccReader(LexReader):
-    pass
+    def readRhs(self):
+        """
+        read until <blank><tab><newline> but fixed with ' '
+        """
+        self.skipc(' \n\t')
+        p=self._p
+        s=self._buffer
+        
+        assert p<len(s),'no string found'
+
+        q=p
+        if s[q]=="'":
+            while q+1<len(s) and (s[q] != "'" or p==q):
+                q+=1
+            assert s[q]=="'",'not match \''
+            q+=1
+        else:
+            while q+1<len(s) and s[q] not in ' \n\t':
+                q+=1
+        
+        self._p=q
+        ans=self._buffer[p:q]
+        print('read input: %s'%repr(ans))
+        if self.verbo: print('read input: %s'%repr(ans))
+        return ans
 
 class YaccWriter(Writer):
     def writeToHeaders(self,s:str):
@@ -217,7 +241,7 @@ class YaccProcessor:
         w.writeDown()
     
     def genYtabh(self):
-        with open(self.generateTokenH,'w') as f:
+        with open(self.generateTokenH,'w',encoding='latin-1') as f:
             id=256
             for token in self.tokens:
                 f.write('#define '+token+' '+str(id)+'\n')
@@ -258,7 +282,7 @@ class YaccProcessor:
             words=[]
             r.skipc(' \t')
             while r.peek()!='\n':
-                words.append(r.readString())
+                words.append(r.readRhs())
                 r.skipc(' \t')
             if meta=='token':
                 self.addToken(words)
@@ -312,7 +336,7 @@ class YaccProcessor:
                 r.skipc(' \t')
 
                 while r.peek() not in '{\n%':
-                    rhs.append(r.readString())
+                    rhs.append(r.readRhs())
                     r.skipc(' \t')
                 
                 pri=None

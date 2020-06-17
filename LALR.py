@@ -1,5 +1,6 @@
 import copy
 from symbolpool import so
+from symbolpool import dbgPrintFormat
 from symbolpool import Symbol
 
 
@@ -495,7 +496,7 @@ def addProduction(lhs:Symbol,rhs:list,priority=None):
         pri='non'
     else: pri='%3d'%priority
 
-    print('LALR: new prod (pri=%s):'%pri,repr(p))
+    print('LALR: new prod (pri=%s):'%pri,dbgPrintFormat(str(p)))
     return p
 
 def addProductionDone(start:Symbol):

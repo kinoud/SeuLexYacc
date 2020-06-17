@@ -8,6 +8,6 @@ extern int yyleng;
 extern int yylval;
 extern int*yyaval;
 extern int yylex();
-char input(); // NOTE: defined in driver program (such as y.tab.c)
-void unput(char); // NOTE: defined in driver program (such as y.tab.c)
+int input(); // NOTE: defined in driver program (such as y.tab.c)
+void unput(int); // NOTE: defined in driver program (such as y.tab.c)
 void _lexyy_init();
